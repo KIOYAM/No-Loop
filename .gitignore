@@ -1,0 +1,62 @@
+# No_Loop — root .gitignore
+# Machine contract: ENVIRONMENT.md · Reference library: R-ENV-6 · Secrets: R-SEC-1
+
+# --- Python runtime / environments ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# --- Reference study library: cloned repos — NEVER commit (R-ENV-6) ---
+.references/
+
+# --- Secrets & credentials — NEVER commit (R-SEC-1) ---
+.env
+.env.*
+*.key
+*.pem
+secrets*.json
+credentials*.json
+
+# --- User data / personal documents — NEVER commit ---
+.local-data/
+data/resumes/
+data/exports/
+*.sqlite
+*.sqlite3
+*.db
+*.corrupt.bak
+
+# --- Test & coverage artifacts ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# --- Build & packaging artifacts ---
+build/
+dist/
+*.spec
+packaging/output/
+
+# --- Caches (must live on D:\DevCache; guarded anyway) ---
+.pipcache/
+.playwright/
+ms-playwright/
+
+# --- IDE / editor ---
+.idea/
+.vscode/
+*.swp
+
+# --- OS noise ---
+Thumbs.db
+desktop.ini
+.DS_Store

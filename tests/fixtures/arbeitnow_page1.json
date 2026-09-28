@@ -1,0 +1,36 @@
+{
+  "legal": "Synthetic fixture mirroring the documented arbeitnow job-board-api response shape (DATA_SOURCES.md §1.1). No real personal data.",
+  "data": [
+    {
+      "slug": "syn-1-pydev",
+      "company_name": "Fixture GmbH",
+      "title": "Senior Python Developer",
+      "description": "<h2>About</h2><p>Build services with <b>Python</b>, FastAPI and PostgreSQL. Docker and REST API experience required.</p><script>alert('x')</script>",
+      "remote": true,
+      "location": "Berlin",
+      "created_at": 1758150000,
+      "url": "https://arbeitnow.com/jobs/syn-1-pydev"
+    },
+    {
+      "slug": "syn-2-java",
+      "company_name": "Legacy Soft",
+      "title": "Java Backend Developer",
+      "description": "<p>Java, Spring, SQL. Onsite in Munich.</p>",
+      "remote": false,
+      "location": "Munich",
+      "created_at": 1758060000,
+      "url": "https://arbeitnow.com/jobs/syn-2-java"
+    },
+    {
+      "slug": "syn-3-bad",
+      "company_name": "",
+      "title": "",
+      "description": "<p>missing title/company must be skipped</p>",
+      "remote": false,
+      "location": "Nowhere",
+      "created_at": null,
+      "url": "not-a-url"
+    }
+  ],
+  "links": {"next": null}
+}

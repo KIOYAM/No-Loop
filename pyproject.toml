@@ -1,0 +1,86 @@
+[project]
+name = "noloop"
+version = "0.1.0"
+description = "No_Loop - local-first, policy-aware job discovery and application automation desktop app"
+readme = "No_Loop_docs/README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+authors = [{ name = "No_Loop Contributors" }]
+dependencies = [
+    # Domain validation + typed models (ARCHITECTURE.md dependency register)
+    "pydantic>=2.7,<3",
+    # Persistence abstraction (sole DB layer; SQLite via stdlib driver)
+    "sqlalchemy>=2.0,<3",
+    # HTTP client (SOLE HTTP client - no requests/aiohttp, R-ENV-3)
+    "httpx>=0.27,<1",
+    # HTML parsing (SOLE parser - no bs4/lxml, R-ENV-3)
+    "selectolax>=0.3,<1",
+    # Fuzzy text similarity (deterministic matching)
+    "rapidfuzz>=3,<4",
+]
+
+[project.optional-dependencies]
+# OS credential store (security requirement; kept optional at import sites)
+keyring = ["keyring>=24,<26"]
+# Browser automation - adapter-only, on-demand (R-ARCH-5); v0.1 fill-only
+browser = ["playwright>=1.45,<2"]
+# PDF reading - pending ADR-2 (PyMuPDF is AGPL; decision recorded before P004)
+pdf = ["pymupdf>=1.24,<2"]
+# DOCX reading/writing - P004/P009
+docx = ["python-docx>=1.1,<2"]
+# PDF writing - pending ADR-7
+pdfwrite = ["reportlab>=4,<5"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["app", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "C4", "DTZ", "T20", "PTH", "S"]
+ignore = [
+    "S101",  # assert use is fine in tests; production paths reviewed
+]
+
+[tool.ruff.lint.per-file-ignores]
+# tests/fixtures: asserts allowed, synthetic timestamps fine
+"tests/*" = ["S101", "S105", "S106", "DTZ"]
+# CLI prints by design (user-facing surface); demo fixtures use naive datetimes
+"app/cli.py" = ["T201", "DTZ"]
+"scripts/*" = ["T201"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+# Domain is strict (CODING_STANDARDS §1)
+module = "app.domain.*"
+strict = true
+
+[[tool.mypy.overrides]]
+# Third-party libs without stubs
+module = ["selectolax.*", "rapidfuzz.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+markers = [
+    "network: live-network tests, skipped by default (CODING_STANDARDS §8.7)",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/ui/*"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
