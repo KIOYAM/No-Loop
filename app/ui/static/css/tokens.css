@@ -1,0 +1,118 @@
+/* ============================================================================
+   No_Loop design tokens
+   Light (default, LinkedIn-like: cool white surfaces, #0a66c2 accent)
+   Dark  (opt-in, never automatic unless the OS asks and the user has no choice)
+   Both themes are fully specified — no half-themed component.
+   ========================================================================== */
+
+:root {
+  /* type */
+  --font: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue",
+          Arial, "Noto Sans", sans-serif;
+  --font-mono: "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  /* spacing scale (4px base) */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 24px; --s7: 32px; --s8: 48px;
+
+  /* radii */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+
+  /* elevation */
+  --shadow-1: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .10);
+  --shadow-2: 0 4px 8px -2px rgba(16, 24, 40, .10), 0 2px 4px -2px rgba(16, 24, 40, .06);
+  --shadow-3: 0 12px 24px -6px rgba(16, 24, 40, .16), 0 4px 8px -4px rgba(16, 24, 40, .08);
+
+  /* motion */
+  --ease: cubic-bezier(.2, .8, .25, 1);
+  --ease-emph: cubic-bezier(.16, 1, .3, 1);
+  --t-fast: 120ms;
+  --t-med: 220ms;
+  --t-slow: 420ms;
+
+  /* layout */
+  --topbar-h: 56px;
+  --sidenav-w: 232px;
+  --sidenav-w-collapsed: 64px;
+}
+
+/* ---------------------------------------------------------------- light --- */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg:        #f4f2ee;   /* LinkedIn's warm paper */
+  --bg-2:      #eceae5;
+  --surface:   #ffffff;
+  --surface-2: #f8f6f2;
+  --surface-3: #efedE8;
+  --inset:     #f3f1ec;
+
+  --line:      #e3e0d8;
+  --line-2:    #d3d0c7;
+
+  --text:      #1d2226;
+  --text-2:    #4c555e;
+  --muted:     #6b7480;
+  --faint:     #949aa3;
+
+  --accent:      #0a66c2;
+  --accent-hover:#084e96;
+  --accent-soft: #e8f1fb;
+  --accent-line: #b9d4f1;
+  --on-accent:   #ffffff;
+
+  --ok:        #057642;   --ok-soft:    #d7f0e4;
+  --warn:      #b2400c;   --warn-soft:  #fbe8d8;
+  --bad:       #b42318;   --bad-soft:   #fbe4e2;
+  --info:      #0a66c2;   --info-soft:  #e8f1fb;
+  --gold:      #8a6100;   --gold-soft:  #faeccb;
+
+  --skeleton-a: #eceae5;
+  --skeleton-b: #f7f6f3;
+
+  --focus: 0 0 0 3px rgba(10, 102, 194, .35);
+  --scrim: rgba(29, 34, 38, .42);
+}
+
+/* ----------------------------------------------------------------- dark --- */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg:        #111418;
+  --bg-2:      #0c0e11;
+  --surface:   #1a1f26;
+  --surface-2: #21272f;
+  --surface-3: #2a313a;
+  --inset:     #15191e;
+
+  --line:      #2b323b;
+  --line-2:    #3a434e;
+
+  --text:      #e8edf3;
+  --text-2:    #b6c0cc;
+  --muted:     #8b97a5;
+  --faint:     #6a7684;
+
+  --accent:      #5aa9ff;
+  --accent-hover:#8cc4ff;
+  --accent-soft: #12283f;
+  --accent-line: #23486e;
+  --on-accent:   #06121f;
+
+  --ok:        #4ade9b;   --ok-soft:    #102b21;
+  --warn:      #fbbf6b;   --warn-soft:  #2e2312;
+  --bad:       #ff8b84;   --bad-soft:   #331a19;
+  --info:      #5aa9ff;   --info-soft:  #12283f;
+  --gold:      #f2c96b;   --gold-soft:  #2d2513;
+
+  --skeleton-a: #1e242b;
+  --skeleton-b: #262d36;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .5);
+  --shadow-2: 0 4px 10px rgba(0, 0, 0, .5);
+  --shadow-3: 0 16px 32px rgba(0, 0, 0, .55);
+
+  --focus: 0 0 0 3px rgba(90, 169, 255, .4);
+  --scrim: rgba(0, 0, 0, .6);
+}

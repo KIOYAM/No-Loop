@@ -102,13 +102,12 @@ class SourcePolicyError(DomainError):
     """
 
     def __init__(self, stage: str, reason: str, **kwargs: Any) -> None:
-        super().__init__(
-            stage=stage,
-            reason=reason,
-            retryable=False,
-            user_action="Use the assisted flow for this source instead of automation.",
-            **kwargs,
+        kwargs.setdefault("retryable", False)
+        kwargs.setdefault(
+            "user_action",
+            "Use the assisted flow for this source instead of automation.",
         )
+        super().__init__(stage=stage, reason=reason, **kwargs)
 
 
 class StorageError(DomainError):
@@ -119,36 +118,28 @@ class ConsentRequiredError(DomainError):
     """An action that sends data off-device was attempted without consent (R-SEC-3)."""
 
     def __init__(self, stage: str, reason: str, **kwargs: Any) -> None:
-        super().__init__(
-            stage=stage,
-            reason=reason,
-            retryable=False,
-            user_action="Review and grant consent before retrying this action.",
-            **kwargs,
-        )
+        kwargs.setdefault("retryable", False)
+        kwargs.setdefault("user_action", "Review and grant consent before retrying this action.")
+        super().__init__(stage=stage, reason=reason, **kwargs)
 
 
 class AutomationBlockedError(DomainError):
     """Automation hit a hard stop (CAPTCHA, MFA, anti-bot, unknown state) — R-POLICY-2."""
 
     def __init__(self, stage: str, reason: str, **kwargs: Any) -> None:
-        super().__init__(
-            stage=stage,
-            reason=reason,
-            retryable=False,
-            user_action="Complete this step manually; No_Loop has paused and recorded evidence.",
-            **kwargs,
+        kwargs.setdefault("retryable", False)
+        kwargs.setdefault(
+            "user_action", "Complete this step manually; No_Loop has paused and recorded evidence."
         )
+        super().__init__(stage=stage, reason=reason, **kwargs)
 
 
 class ProviderUnavailableError(DomainError):
     """The requested AI provider tier is not available; caller must fall back (S7)."""
 
     def __init__(self, stage: str, reason: str, **kwargs: Any) -> None:
-        super().__init__(
-            stage=stage,
-            reason=reason,
-            retryable=False,
-            user_action="Continue with the next available provider tier (rule-based / no-AI).",
-            **kwargs,
+        kwargs.setdefault("retryable", False)
+        kwargs.setdefault(
+            "user_action", "Continue with the next available provider tier (rule-based / no-AI)."
         )
+        super().__init__(stage=stage, reason=reason, **kwargs)

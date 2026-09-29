@@ -211,9 +211,7 @@ def cmd_import_resume(args: argparse.Namespace) -> None:
 
     extractor = get_extractor(path.name)
     if extractor is None:
-        raise SystemExit(
-            f"unsupported format: {path.suffix} (supported: txt, docx, pdf-with-limits)"
-        )
+        raise SystemExit(f"unsupported format: {path.suffix} (supported: txt, docx, pdf)")
     result = extractor.extract(path.read_bytes())  # type: ignore[attr-defined]
     if not result.ok:
         print(f"IMPORT FAILED — {result.error_reason}")

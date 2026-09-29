@@ -173,6 +173,27 @@ class LedgerService:
     def audit_trail(self) -> list[dict[str, Any]]:
         return list(self._audit)
 
+    def replace(self, application: Application) -> Application:
+        """Persist a side-effect of a transition (e.g. generated artifact ids).
+
+        The record keeps its status — this is *not* a state transition; it only
+        links the artifacts the pipeline produced so reports can show them.
+        """
+        if application.id not in self._records:
+            raise ValidationError(
+                stage="ledger.replace", reason=f"unknown application {application.id}"
+            )
+        self._records[application.id] = application
+        self._audit.append(
+            {
+                "event": "artifacts_linked",
+                "application_id": application.id,
+                "artifact_count": len(application.artifact_ids),
+                "at": application.updated_at.isoformat(),
+            }
+        )
+        return application
+
 
 class ExportService:
     """CSV/JSON export of the ledger (excludes credential references by design)."""

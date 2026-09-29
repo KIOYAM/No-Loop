@@ -7,6 +7,9 @@ requires-python = ">=3.12"
 license = "Apache-2.0"
 authors = [{ name = "No_Loop Contributors" }]
 dependencies = [
+    "pypdf>=5.0",
+    "reportlab>=4,<5",
+    "python-docx>=1.1,<2",
     # Domain validation + typed models (ARCHITECTURE.md dependency register)
     "pydantic>=2.7,<3",
     # Persistence abstraction (sole DB layer; SQLite via stdlib driver)
@@ -24,8 +27,7 @@ dependencies = [
 keyring = ["keyring>=24,<26"]
 # Browser automation - adapter-only, on-demand (R-ARCH-5); v0.1 fill-only
 browser = ["playwright>=1.45,<2"]
-# PDF reading - pending ADR-2 (PyMuPDF is AGPL; decision recorded before P004)
-pdf = ["pymupdf>=1.24,<2"]
+# (ADR-2 decided 2026-09-29: pypdf BSD-3 is a core dep; PyMuPDF rejected - AGPL)
 # DOCX reading/writing - P004/P009
 docx = ["python-docx>=1.1,<2"]
 # PDF writing - pending ADR-7
@@ -47,10 +49,14 @@ ignore = [
 "tests/*" = ["S101", "S105", "S106", "DTZ"]
 # CLI prints by design (user-facing surface); demo fixtures use naive datetimes
 "app/cli.py" = ["T201", "DTZ"]
+"app/serve_ui.py" = ["T201"]
+# UI server: quiet request logging is intentional
+"app/ui/*" = ["T201"]
 "scripts/*" = ["T201"]
 
 [tool.mypy]
 python_version = "3.12"
+disallow_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 no_implicit_optional = true
@@ -63,8 +69,14 @@ strict = true
 
 [[tool.mypy.overrides]]
 # Third-party libs without stubs
-module = ["selectolax.*", "rapidfuzz.*"]
+module = ["selectolax.*", "rapidfuzz.*", "keyring.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Tests: behavior coverage over annotation ceremony (CODING_STANDARDS §8)
+module = "tests.*"
+disallow_untyped_defs = false
+check_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -133,3 +133,62 @@ Open ADR slots (from RESEARCH.md §4 + NOLOOP_DEV_KICKOFF-spec): ADR-1 UI shell;
 - Environment audit: no C: writes (all data in .local-data on D:, cleaned after test); no new packages; lock unchanged.
 - Unresolved issues: PDF extraction blocked on ADR-2 (honest refusal shipped); BYOK Gemini Tier-2 adapter pending; persistence is JSON pending ADR-6 benchmark; UI shell ADR-1 pending; LOOP-10 benchmarks pending; live-source POLICY_STATUS re-verification due at next LOOP-12.
 - Evidence: pytest 91 passed; mypy/ruff clean; CLI transcripts in session log; .local-data written and then removed (privacy hygiene).
+
+
+### [2026-09-29 22:25] UI/server hardening + live end-to-end verification + engine None-targeting fix
+- Agent/model: Buffy (Codebuff, z-ai/glm-5.3-flash)
+- Loop(s) executed: LOOP-4 (UI services) + LOOP-9 (review of handler logic) + Closing Checklist; live smoke run against real arbeitnow API
+- Task: finish interrupted Gemini/settings/UI/question-answerer/platform-policy/resume-edgecase wave; fix all lint/type debt; verify the full stack live.
+- Files changed: app/domain/errors.py (SourcePolicyError/ConsentRequiredError/AutomationBlockedError/ProviderUnavailableError: kwargs-collision fixed — subclass defaults no longer clobber caller values); app/ui/server.py (kanban move evidence bug: compared str target vs enum → evidence always None → domain refused; convenience flat profile keys → TargetPreference; _record_task_failure — background tasks can no longer fail silently; typed sort in _run_match); app/services/match_engine.py (targeting=None tolerated: gate PASS + neutral TargetPreference("any") fallback for factors); app/adapters/system_probe.py (os.sysconf absent on Windows — getattr guard); app/services/ai_registry.py (_path_exists str|None; stale ignore removed); app/services/question_answerer.py (contextlib.suppress); app/services/reports.py (line length); tests/integration/test_ui_server.py (unused var).
+- Real bugs found by live run (not by tests): (1) kanban evidence bug above — domain correctly refused, UI was at fault; (2) profiles created without nested targeting silently no-op'd matching; (3) MatchEngine(targeting=None) crashed in _gate/_score_factors.
+- Live evidence: server boots on 127.0.0.1; SSE stream verified with curl (-N); Gemini key saved write-only (backend=file); profile with targeting persisted; arbeitnow LIVE discovery → 27 real jobs stored; match over live jobs: hard gates correctly fail German-onsite roles vs Chennai/Remote targeting; resume import → 6 inferred facts → bulk-confirm → engine rerun shows confirmed-skills lift (quant role with Python/SQL: 0.50). All over the HTTP API, no test fixtures.
+- Tests run: pytest — 139 passed, 0 failed. Lint/types: ruff check "All checks passed!", ruff format clean, mypy --no-incremental "Success: no issues found in 40 source files".
+- Unresolved issues: real-browser UI pass (manual); assisted-flow package UI wiring; SSE backpressure benchmark (LOOP-10); Gemini key against real API endpoint (needs user key); PDF/DOCX rendering (ADR-7); SQLite (ADR-6).
+- Environment audit: .smoke-data/.smoke.log/.local-data removed after verification (privacy hygiene); no C: writes; no new packages.
+
+### [2026-09-29 23:10] Capability audit (star-wise) — IMPROVEMENT_AUDIT.md
+- Agent/model: Buffy (Codebuff, z-ai/glm-5.3-flash)
+- Task: star-wise audit of all capabilities vs actual code state.
+- Method: read every service/adapter/route file; traced endpoint wiring (JS→API), provider usage, and pipeline integration; verified test count and gate status.
+- Key findings: settings.js route registered but MISSING (P0 UI bug); agent_run.py hardcodes RuleBasedProvider (user's Gemini key never used in drafting); resume_edgecases not wired into resume_pipeline (only profile_service); sources are Germany-heavy for an India-first product; ADR-6/ADR-2 still open.
+- Evidence: 17 capabilities rated from code inspection; ratings and file-level evidence in No_Loop_docs/IMPROVEMENT_AUDIT.md.
+- Next: 5 prioritized tasks listed in the audit (Settings fix first).
+
+
+### [2026-09-29 23:59] Audit tasks 1-5 executed in parallel (settings UI, AI registry, PDF, sources, package viewer)
+- Agent/model: Buffy (Codebuff, z-ai/glm-5.3-flash)
+- Task: execute all 5 recommended improvements from IMPROVEMENT_AUDIT.md.
+- T1 settings.js: created the route registered in app.js (was MISSING — P0). Gemini key write-only form + model picker, provider selector with fallback help, per-profile limits editor, system diagnostics panel. Module verified via node import (render exported).
+- T2 AI through registry: GeminiProvider gained sync generate() bridge (EmailDrafter/QuestionAnswerer are sync callers — even a wired Gemini previously would have crashed); AgentRunService now resolves the provider via AIRegistry (gemini->local->rule, never raises); server passes settings into the service. The user's Gemini key now actually drives drafting.
+- T3 PDF (ADR-2 closed): pypdf 6.19.0 (BSD-3) chosen over PyMuPDF (AGPL - forbidden by R-TRUTH-6) and pdfminer.six (slower); PdfExtractor replaces PdfExtractorUnavailable (magic-byte check, encrypted-PDF refusal, 50-page bound, per-page isolation, scanned-document honest error); verified end-to-end: generated PDF -> text -> 7 inferred facts; attribution recorded in docs/ATTRIBUTIONS.md.
+- T4 sources: remotive adapter (public API, remote jobs incl. India, sanitize tests) + adzuna-IN adapter (user's free app_id/app_key via settings + secret store, never hardcoded; INR salary currency); /api/discover now takes source + query; /api/settings/adzuna stores credentials. Live smoke: remotive + adzuna both returned jobs (9 stored).
+- T5 assisted-package viewer: GET /api/assisted-packages (+ api.assistedPackages); per-card file icon opens modal with policy status label, steps checklist, ready answers with copy buttons, needs-user items flagged, email draft with copy, you-click-submit reminder. LinkedIn/Indeed compliant flow now human-usable.
+- Tests run: pytest — 145 passed (6 new: PDF extract/magic/scanned + remotive parse/sanitize + adzuna credentials/parse). Lint/types: ruff clean, ruff format clean, mypy "Success: no issues found in 42 source files".
+- Live evidence: server up on 127.0.0.1:8880; /api/meta ok; discover source=remotive and source=adzuna both accepted; assisted-packages endpoint returns; settings.js verified as importable module via node.
+- Dependencies added/removed: +pypdf>=5.0 (pyproject + lock refreshed; all into .venv on D:, PIP_CACHE_DIR=D:/DevCache/pip).
+- Environment audit: smoke data/server cleaned; no C: writes; no duplicate packages.
+- Unresolved: real-browser click-through of settings + package viewer (module-level verified); Gemini live call needs the user's key; remoteok needs policy verification before adapter work; SSE backpressure benchmark (LOOP-10).
+
+### [2026-09-30 00:20] Reference gap analysis + platform automation map — REFERENCE_GAP_ANALYSIS.md
+- Agent/model: Buffy (Codebuff, z-ai/glm-5.3-flash)
+- Task: identify what we importantly missed vs the 8 reference repos; map platform/company-portal automation per policy.
+- Method: re-read all 8 .references READMEs + AutoApply apply/ module layout; cross-checked DATA_SOURCES §1.9 policy statuses and R-POLICY rules; 2026 web research on auto-apply tools + India portals (LinkedIn/Naukri ToS enforcement, Instahyre/Cutshort/Wellfound landscape).
+- Key findings: 12 gaps rated (A1-A12); biggest: document rendering (ADR-7 blocks 3 features), Knowledge Base with TF-IDF reuse (AutoApply, MIT), ATS text-similarity score. Platform map: LinkedIn/Naukri = PROHIBITED (assisted only, ever), Indeed/Instahyre etc = ASSISTED_ONLY, ATS portals (Workday/Greenhouse/Lever/Ashby) = the lawful fill-only sweet spot with MIT reference code available from AutoApply.
+- Honest note recorded: all auto-submit reference tools violate platform ToS (AutoApply admits it in its own README line 212); our assisted/fill-only posture is the differentiator, not a limitation.
+- Evidence: No_Loop_docs/REFERENCE_GAP_ANALYSIS.md (Parts A-D with priorities).
+
+### [2026-09-30 01:20] Priorities 1-6 executed (ADR-7 renderer, KB+TF-IDF, ATS plans, answer sheets, scheduler, employer intel)
+- Agent/model: Buffy (Codebuff, z-ai/glm-5.3-flash)
+- Task: execute all six priorities from REFERENCE_GAP_ANALYSIS Part D.
+- P1 ADR-7 EXECUTED: reportlab 5.0.1 (BSD) + python-docx 1.2.0 (MIT) chosen (weasyprint heavy, PyMuPDF AGPL-forbidden); renderer.py renders ATS-safe resume PDF + resume DOCX + interview-prep-pack DOCX; both promoted to core deps in pyproject (stale AGPL pymupdf extra removed); attribution recorded.
+- P2: domain/knowledge.py — KBEntry (project/achievement/story/blurb/certification, user-asserted, reuse counter), tech-token-aware tokenizer (c++, ci/cd kept whole), tfidf_rank (IDF over entry corpus, cosine vs JD); resume_builder.py — ResumeAssembler (facts+KB->doc; KB entries quoted verbatim, never invented), ats_score (TF-IDF cosine resume-vs-JD), tailoring_suggestions (missing terms with explicit do-NOT-claim guard).
+- P3: greenhouse.py adapter (public boards API: discovery + per-job question schema; ALLOWED_PUBLIC_API declared); apply_sheets.ATSFillPlanner — fill plans from question schema, file-upload fields honestly excluded, record_fill/reliability with the documented v0.2 gate (>=98% over >=50 fills).
+- P4: build_answer_sheet — LinkedIn Easy-Apply 5-question set + Naukri 8 recruiter fields, answers only from the fact sheet (needs_user flagged otherwise), JD-skill substitution in the Easy-Apply skill slot; /api/answer-sheet; platform allowlist enforced. NO browser automation against PROHIBITED platforms (R-POLICY-3).
+- P5: scheduler.py — persisted per-profile schedules (30min-24h bounds), 60s daemon tick, one profile per tick, discover+match only, all caps still enforced, nothing auto-submits; /api/schedule.
+- P6: employer_intel.py — per-company report (applications, outcome breakdown, interview rate, avg days-to-response) from the user's OWN ledger + user-authored notes; top-companies view; /api/company/intel + /api/company/top.
+- Wiring: UILauncher handlers _profile_and_facts (shared validation), kb save/delete, render resume/prep-pack, ats plan, answer sheet, schedule, company intel/top; 10 new POST routes registered.
+- Live evidence (all over HTTP on 127.0.0.1:8890): profile->KB entry->resume import->5 facts confirmed->resume PDF 1841 bytes starting %PDF with ATS score 0.3989->prep pack 36995 bytes->LinkedIn sheet filled:2/needs:3->Naukri 8 entries->ATS plan fillable:1/needs-user:1 (file upload correctly excluded)->schedule 60min->intel note recorded.
+- Tests run: pytest - 291 passed (52 new since the last wave; new file test_knowledge_docs_sheets.py covers TF-IDF ranking/cosine/KB invariants, builder+ATS, PDF/DOCX/prep-pack rendering incl. %PDF and PK magic, planner incl. reliability gate, both sheets, scheduler persistence, employer intel). Lint/types: ruff clean, format clean, mypy "Success: no issues found in 50 source files".
+- Dependencies added: reportlab>=4,<5 + python-docx>=1.1,<2 as CORE deps (ADR-7); types-reportlab dev-side; pymupdf extra removed (AGPL, superseded). Lock regenerated. All into .venv on D:.
+- Environment audit: smoke data/server cleaned; no C: writes (PIP_CACHE_DIR=D:/DevCache/pip).
+- Unresolved: KB/prep-pack UI editor screens (endpoints ready); Playwright fill executor for ATS plans (v0.2, gated on the reliability log); resume-rendered docs stored into resume_versions; scheduler UI toggle.

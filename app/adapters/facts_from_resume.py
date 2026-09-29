@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 from app.domain.facts import FactProvenance, ResumeFact, SkillClaim
 
-__all__ = ["ResumeParseOutcome", "parse_resume_text"]
+__all__ = ["ResumeParseOutcome", "parse_resume_text", "KNOWN_SKILLS"]
 
 _SECTION_HEADINGS = {
     "summary": ("summary", "objective", "profile"),
@@ -77,6 +77,9 @@ _KNOWN_SKILLS = (
     "jenkins",
     "selenium",
 )
+
+#: Public alias — shared vocabulary for AI-merged skill facts (taxonomy discipline).
+KNOWN_SKILLS = _KNOWN_SKILLS
 
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 _PHONE_RE = re.compile(r"(?:\+91[-\s]?)?[6-9]\d{4}[-\s]?\d{5}")

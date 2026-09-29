@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>No_Loop — Application Command Center</title>
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🔁</text></svg>">
+</head>
+<body>
+<a class="skip-link" href="#view">Skip to content</a>
+
+<div id="app" class="app" aria-busy="true">
+
+  <!-- ── top bar ─────────────────────────────────────────────── -->
+  <header class="topbar" role="banner">
+    <button class="icon-btn topbar__menu" id="btn-nav" aria-label="Toggle navigation" aria-expanded="true">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+    </button>
+
+    <a class="brand" href="#/dashboard" aria-label="No_Loop home">
+      <span class="brand__mark" aria-hidden="true">⧉</span>
+      <span class="brand__text">No<em>_</em>Loop</span>
+    </a>
+
+    <div class="searchbox">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5 17 17"/></svg>
+      <input type="search" id="global-search" placeholder="Search jobs, companies, applications…"
+             autocomplete="off" aria-label="Search">
+      <div class="searchbox__results" id="search-results" hidden role="listbox"></div>
+    </div>
+
+    <div class="topbar__spacer"></div>
+
+    <div class="live" id="live-pill" title="Realtime connection status">
+      <span class="dot" id="live-dot"></span>
+      <span id="live-label">connecting…</span>
+    </div>
+
+    <button class="icon-btn" id="btn-activity" aria-label="Open activity log" title="Activity log">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 10h3l2-5 3 11 2.5-7 1.5 3H18"/></svg>
+      <span class="badge" id="activity-badge" hidden>0</span>
+    </button>
+
+    <button class="icon-btn" id="btn-theme" aria-label="Switch theme" title="Toggle light / dark">
+      <svg class="ico-sun" viewBox="0 0 20 20" aria-hidden="true">
+        <circle cx="10" cy="10" r="4"/><path d="M10 1v2M10 17v2M1 10h2M17 10h2M4 4l1.5 1.5M14.5 14.5 16 16M16 4l-1.5 1.5M5.5 14.5 4 16"/>
+      </svg>
+      <svg class="ico-moon" viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M16 12.5A7 7 0 0 1 7.5 4a7 7 0 1 0 8.5 8.5Z"/>
+      </svg>
+    </button>
+
+    <a class="btn btn--ghost" href="#/settings" id="btn-settings" title="Settings">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3"/><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M16 4l-1.4 1.4M5.4 14.6 4 16M16 16l-1.4-1.4M5.4 5.4 4 4"/></svg>
+      <span data-i18n="nav.settings">Settings</span>
+    </a>
+  </header>
+
+  <!-- ── navigation ──────────────────────────────────────────── -->
+  <nav class="sidenav" id="sidenav" aria-label="Primary">
+    <div class="sidenav__profile">
+      <div class="avatar" id="active-avatar">?</div>
+      <div class="sidenav__who">
+        <strong id="active-name">No profile</strong>
+        <select id="profile-switch" aria-label="Active profile"></select>
+      </div>
+    </div>
+
+    <ul class="navlist" id="navlist">
+      <li><a href="#/dashboard" data-route="dashboard">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 11h5v6.5h-5zM7.5 3.5h5V17h-5zM12.5 8h5v9h-5z"/></svg>
+        <span data-i18n="nav.dashboard">Dashboard</span></a></li>
+      <li><a href="#/resume" data-route="resume">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2H5.5A1.5 1.5 0 0 0 4 3.5v13A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V7Z"/><path d="M11 2v5h5"/></svg>
+        <span data-i18n="nav.resume">Resume</span></a></li>
+      <li><a href="#/profile" data-route="profile">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="6.5" r="3.5"/><path d="M3.5 17a6.5 6.5 0 0 1 13 0"/></svg>
+        <span data-i18n="nav.profile">Profile</span></a></li>
+      <li><a href="#/jobs" data-route="jobs">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="6" width="15" height="11" rx="1.5"/><path d="M7 6V4.5A1.5 1.5 0 0 1 8.5 3h3A1.5 1.5 0 0 1 13 4.5V6"/></svg>
+        <span data-i18n="nav.jobs">Jobs</span></a></li>
+      <li><a href="#/applications" data-route="applications">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5.5h14M3 10h14M3 14.5h9"/></svg>
+        <span data-i18n="nav.pipeline">Pipeline</span></a></li>
+      <li><a href="#/reports" data-route="reports">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16V9M8.7 16V4M13.3 16v-5M18 16V7"/></svg>
+        <span data-i18n="nav.reports">Reports</span></a></li>
+      <li><a href="#/settings" data-route="settings">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3"/><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M16 4l-1.4 1.4M5.4 14.6 4 16M16 16l-1.4-1.4M5.4 5.4 4 4"/></svg>
+        <span data-i18n="nav.settings">Settings</span></a></li>
+    </ul>
+
+    <div class="sidenav__foot">
+      <div class="privacy-note" data-i18n="shell.privacy">
+        Local-only · 127.0.0.1 · your data never leaves this machine
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── main view (routes are lazy-loaded) ──────────────────── -->
+  <main class="view" id="view" tabindex="-1">
+    <div class="route-skeleton" id="route-skeleton">
+      <div class="skel skel--title"></div>
+      <div class="skel skel--row"></div>
+      <div class="skel-grid">
+        <div class="skel skel--card"></div>
+        <div class="skel skel--card"></div>
+        <div class="skel skel--card"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── activity drawer ─────────────────────────────────────── -->
+  <aside class="drawer" id="activity-drawer" hidden aria-label="Agent activity log">
+    <header class="drawer__head">
+      <h2 data-i18n="activity.title">Activity</h2>
+      <button class="icon-btn" id="btn-activity-close" aria-label="Close activity log">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg>
+      </button>
+    </header>
+    <ol class="feed" id="activity-feed" aria-live="polite"></ol>
+    <footer class="drawer__foot">
+      <span class="muted" id="activity-count"></span>
+      <button class="btn btn--ghost btn--sm" id="btn-activity-clear" data-i18n="activity.clear">Clear</button>
+    </footer>
+  </aside>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <div class="toaster" id="toaster" aria-live="polite" aria-atomic="true"></div>
+</div>
+
+<noscript>
+  <p style="padding:24px;font:15px system-ui">No_Loop's UI needs JavaScript. The Python CLI works without it.</p>
+</noscript>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

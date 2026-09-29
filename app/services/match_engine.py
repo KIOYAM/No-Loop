@@ -130,7 +130,7 @@ class MatchEngine:
         *,
         profile_id: str,
         profile_skills: list[str],
-        targeting: TargetPreference,
+        targeting: TargetPreference | None,
         weights: dict[str, float] | None = None,
         now: datetime | None = None,
     ) -> None:
@@ -148,6 +148,8 @@ class MatchEngine:
     def _gate(self, job: Job) -> tuple[GateVerdict, list[str]]:
         reasons: list[str] = []
         t = self.targeting
+        if t is None:
+            return GateVerdict.PASS, []
 
         # Work-mode compatibility
         if job.work_mode and t.work_modes and WorkMode.ANY not in t.work_modes:
@@ -190,7 +192,7 @@ class MatchEngine:
         factors: list[MatchFactor] = []
         notes: list[str] = []
         missing: list[str] = []
-        t = self.targeting
+        t = self.targeting or TargetPreference(role_titles=("any",))
 
         # skills overlap
         job_skills = _skills_from_job(job)
@@ -216,7 +218,7 @@ class MatchEngine:
 
         # title similarity
         best = 0.0
-        for title in self.targeting.role_titles:
+        for title in self.targeting.role_titles if self.targeting else ():
             best = max(best, fuzz.token_set_ratio(_norm(job.title), _norm(title)) / 100.0)
         factors.append(
             MatchFactor(

@@ -18,7 +18,7 @@ from app.ports import ExtractionResult
 __all__ = [
     "TxtExtractor",
     "DocxExtractor",
-    "PdfExtractorUnavailable",
+    "PdfExtractor",
     "get_extractor",
     "SUPPORTED_FORMATS",
 ]
@@ -63,7 +63,7 @@ class DocxExtractor:
                 user_action="Split or compress the file.",
             )
         try:
-            import docx  # type: ignore[import-not-found]  # optional extra "docx"
+            import docx
         except ImportError:
             return ExtractionResult(
                 False,
@@ -94,12 +94,13 @@ class DocxExtractor:
         return ExtractionResult(True, text)
 
 
-class PdfExtractorUnavailable:
-    """PDF extraction is NOT implemented yet (ADR-2 open). Honest refusal (R-TRUTH-3).
+class PdfExtractor:
+    """PDF text extraction via pypdf (BSD-3-Clause — ADR-2 decision 2026-09-29).
 
-    Special case: many "PDFs" from Indian portals contain an embedded text
-    layer detectable without PyMuPDF; if plain ASCII text is extractable from
-    the raw bytes we use it, else we refuse with the guided fallback.
+    pypdf was chosen over PyMuPDF (AGPL — contamination risk per R-TRUTH-6) and
+    pdfminer.six (MIT but slower). Password-protected files are detected by
+    pypdf and refused with a guided user action. Scanned/image-only PDFs yield
+    no text and are refused honestly (no OCR in v0.1, spec §3).
     """
 
     formats = ("pdf",)
@@ -111,20 +112,57 @@ class PdfExtractorUnavailable:
                 error_reason="file exceeds 10 MB limit",
                 user_action="Split or compress the file.",
             )
-        text = self._naive_text_layer(data)
-        if text and len(text) >= 200:
-            return ExtractionResult(True, text)
-        return ExtractionResult(
-            False,
-            error_reason=(
-                "PDF text extraction is not available yet (library decision ADR-2 pending)"
-                if not text
-                else "no text layer found — this looks like a scanned image"
-            ),
-            user_action=(
-                "Save the resume as .txt or .docx for now; paste-text import is also available."
-            ),
-        )
+        if not data.startswith(b"%PDF"):
+            return ExtractionResult(
+                False,
+                error_reason="file is not a valid PDF (bad magic bytes)",
+                user_action="Re-export the file as PDF from the source app.",
+            )
+        try:
+            from io import BytesIO
+
+            from pypdf import PdfReader
+            from pypdf.errors import PdfReadError
+        except ImportError:  # pragma: no cover - pypdf is a declared dependency
+            return ExtractionResult(
+                False,
+                error_reason="PDF library missing (pypdf not installed)",
+                user_action="Reinstall No_Loop or run: pip install pypdf",
+            )
+        try:
+            reader = PdfReader(BytesIO(data))
+            if reader.is_encrypted:
+                return ExtractionResult(
+                    False,
+                    error_reason="this PDF is password-protected/encrypted",
+                    user_action="Remove the password (Print → Save as PDF) and retry.",
+                )
+            parts: list[str] = []
+            for page in reader.pages[:50]:  # bounded: resumes never need 50+ pages
+                try:
+                    parts.append(page.extract_text() or "")
+                except Exception:  # noqa: BLE001, S112 - one bad page must not kill the doc
+                    continue
+            text = "\n".join(parts).strip()
+        except PdfReadError as exc:
+            return ExtractionResult(
+                False,
+                error_reason=f"corrupt or unreadable PDF: {exc.__class__.__name__}",
+                user_action="Open the PDF to verify it, then re-export and retry.",
+            )
+        except Exception as exc:  # noqa: BLE001 - honest error envelope
+            return ExtractionResult(
+                False,
+                error_reason=f"PDF parse failed: {exc.__class__.__name__}",
+                user_action="Save as .txt/.docx or paste your resume text instead.",
+            )
+        if not text or len(text.split()) < 20:
+            return ExtractionResult(
+                False,
+                error_reason="no text layer found — this looks like a scanned image",
+                user_action="Export a text PDF, save as .docx/.txt, or paste your resume text.",
+            )
+        return ExtractionResult(True, text)
 
     @staticmethod
     def _naive_text_layer(data: bytes) -> str:
@@ -144,7 +182,7 @@ class PdfExtractorUnavailable:
 _REGISTRY: dict[str, object] = {
     "txt": TxtExtractor(),
     "docx": DocxExtractor(),
-    "pdf": PdfExtractorUnavailable(),
+    "pdf": PdfExtractor(),
 }
 
 SUPPORTED_FORMATS = tuple(_REGISTRY)

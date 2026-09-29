@@ -38,3 +38,8 @@ No_Loop code is otherwise original. Ideas and architectural patterns studied fro
 | ScottCoffin/Job_Scraper @ 72e5c64 | AGPL-3.0 | **Never adopt code — ideas-only, permanently** |
 | Vigneshyadala/ai-job-application-bot @ 085f8db | none found | Ideas-only — no code adoption |
 | dsharm9148/job-apply-bot @ 0808cb6 | none found | Ideas-only — no code adoption |
+
+| pypdf 6.19.0 | BSD-3-Clause | app/adapters/extractors.py (PdfExtractor: PDF text extraction) | pip dependency; vendored- none. License: BSD-3-Clause — permissive, attribution recorded (R-TRUTH-6). ADR-2 decision 2026-09-29: pypdf chosen over PyMuPDF (AGPL, forbidden) and pdfminer.six (MIT, slower). |
+
+| reportlab 5.0.1 | BSD-3-Clause | app/services/renderer.py (resume PDF writing — ADR-7) | pip dependency. ADR-7 decision 2026-09-30: chosen over weasyprint (heavy system deps) and PyMuPDF (AGPL, forbidden). |
+| python-docx 1.2.0 | MIT | app/services/renderer.py (resume DOCX + interview prep pack writing) | pip dependency. MIT — permissive. |
