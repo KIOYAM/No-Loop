@@ -85,6 +85,54 @@
 .row--end { justify-content: flex-end; }
 .spacer { flex: 1; }
 
+/* ------------------------------------------------------------ settings ---- */
+/* These cards hang their children straight off `.card` (no .card__head /
+ * .card__body wrapper), so they must supply their own padding — otherwise the
+ * headings sit against the border. */
+.settings-card { padding: var(--s5); }
+
+.settings-card__head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--s3); margin-bottom: var(--s4);
+}
+.settings-card__head h2 { margin: 0 0 3px; font-size: 15.5px; }
+.settings-card__head .muted { margin: 0; font-size: 12.5px; line-height: 1.5; }
+.settings-card__head .tag { flex: none; white-space: nowrap; }
+
+/* Two columns only when the window can actually afford it. Below ~1100px the
+ * cards drop under 350px and every pair, trio and button row collapses back to
+ * one column anyway — so one column is the default, which is also the
+ * conventional settings layout. */
+.settings-grid {
+  display: grid; gap: 16px; align-items: start; grid-template-columns: 1fr;
+}
+@media (min-width: 1100px) {
+  .settings-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* A card here is ~400px wide, where nested .grid--2/.grid--3 (needing 656px
+ * and 720px) silently fall back to a single column and stack every button
+ * into a full-width slab. These wrap on *content* instead, so the layout
+ * holds at any card width rather than only at one breakpoint.
+ * 160px is the widest basis that still fits three fields across a
+ * full-width card. */
+.settings-pair {
+  display: flex; flex-wrap: wrap; gap: var(--s3);
+  margin-bottom: var(--s4);
+}
+.settings-pair > * { flex: 1 1 160px; min-width: 0; }
+.settings-pair > .field { margin-bottom: 0; }
+
+.settings-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: var(--s2); }
+.settings-actions .btn { flex: 0 1 auto; }
+
+.settings-note { margin: var(--s3) 0 0; font-size: 11.5px; line-height: 1.55; }
+.settings-out {
+  margin: var(--s3) 0 0; padding: var(--s3);
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: var(--r-md); font-size: 11.5px; line-height: 1.55;
+}
+
 /* ------------------------------------------------------------ KPI tiles --- */
 .kpi {
   position: relative; overflow: hidden;

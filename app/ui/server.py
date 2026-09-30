@@ -200,14 +200,31 @@ class UILauncher:
     # -- settings -------------------------------------------------------------
 
     def handle_save_gemini_key(self, body: dict[str, Any]) -> dict[str, Any]:
+        settings = self._services()["settings"]
+        if bool(body.get("clear")):
+            # Deletion is a first-class action. An empty api_key is rejected
+            # below, so without this branch the stored key could never be
+            # removed from the UI at all.
+            settings.delete_secret("gemini_api_key")
+            self.broker.publish("settings_changed", {"gemini_configured": False})
+            return {"ok": True, "configured": False, "backend": "none"}
         key = str(body.get("api_key", "")).strip()
         if not key:
             return {"ok": False, "error": "API key must not be empty"}
-        settings = self._services()["settings"]
+        if any(ch.isspace() for ch in key):
+            # the usual paste accident: key plus trailing newline plus more text
+            return {
+                "ok": False,
+                "error": "That looks like more than one line — paste the key on its own",
+            }
         settings.set_secret("gemini_api_key", key)
         self.broker.publish("settings_changed", {"gemini_configured": True})
         # never echo the key back
-        return {"ok": True, "backend": settings.secret_backend("gemini_api_key")}
+        return {
+            "ok": True,
+            "configured": True,
+            "backend": settings.secret_backend("gemini_api_key"),
+        }
 
     def handle_ai_settings(self, body: dict[str, Any]) -> dict[str, Any]:
         from app.services.ai_registry import AIRegistry

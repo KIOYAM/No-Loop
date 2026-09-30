@@ -107,6 +107,8 @@ export const api = {
   localProbe: () => request("/api/ai/local-probe", { method: "POST", body: {} }),
   saveGeminiKey: (api_key) =>
     request("/api/settings/gemini-key", { method: "POST", body: { api_key } }),
+  clearGeminiKey: () =>
+    request("/api/settings/gemini-key", { method: "POST", body: { clear: true } }),
   diagnose: () => request("/api/system/diagnose"),
 
   /* ---- reports ---- */
