@@ -27,8 +27,12 @@ __all__ = ["AIConfig", "AIRegistry", "PROVIDER_CHOICES"]
 
 PROVIDER_CHOICES = ("auto", "gemini", "local", "rule")
 
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
-_GEMINI_CHOICES = ("gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash")
+# Google retires model IDs without notice: gemini-2.0-flash and
+# gemini-1.5-flash now 404 for every key, so the old default made a working
+# key look broken. Every id below was called against the live API with this
+# app's own smoke-test prompt before being offered here.
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+_GEMINI_CHOICES = ("gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash")
 
 
 @dataclass
@@ -44,9 +48,17 @@ class AIConfig:
     @classmethod
     def load(cls, settings: SettingsStore) -> AIConfig:
         raw_provider = str(settings.get("ai_provider", "auto") or "auto")
+        model = str(settings.get("gemini_model", DEFAULT_GEMINI_MODEL) or "")
+        if model not in _GEMINI_CHOICES:
+            # The model field is a closed <select>, so a value outside the list
+            # can only be a retired id we used to offer — Google 404s those.
+            # Correct it once (this write stops happening on later loads)
+            # instead of leaving every request failing against a dead model.
+            model = DEFAULT_GEMINI_MODEL
+            settings.set("gemini_model", model)
         return cls(
             provider=raw_provider if raw_provider in PROVIDER_CHOICES else "auto",
-            gemini_model=str(settings.get("gemini_model", DEFAULT_GEMINI_MODEL)),
+            gemini_model=model,
             local_endpoint=str(settings.get("local_llm_endpoint", "") or ""),
             local_model=str(settings.get("local_llm_model", "") or ""),
         )

@@ -20,7 +20,10 @@ import api from "../core/api.js";
 import { get, set } from "../core/store.js";
 import { el, toast, esc } from "../core/ui.js";
 
-const FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
+// Fallback only if /api/ai/status is unreachable — every id here answers
+// today. The server normalises a retired id on load, so `saved` below is
+// always one of the current models.
+const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash"];
 
 const PROVIDER_HELP = {
   auto: "Picks the best available tier: Gemini → local model → rule-based. Falls back automatically on failure.",
@@ -136,24 +139,33 @@ function geminiCard(ai, syncActive) {
         ? "Key held in your OS credential store (keyring)."
         : "keyring unavailable — key held in .local-data/secrets.json (gitignored, never exported).";
 
+  const where = (backend) =>
+    backend === "keyring" ? "your OS credential store" : ".local-data/secrets.json";
+
   const showOut = (text, kind) => {
     out.textContent = text;
     out.style.display = text ? "" : "none";
-    out.style.color = kind === "bad" ? "var(--bad)" : "";
+    out.style.color = kind === "bad" ? "var(--bad)" : kind === "ok" ? "var(--ok)" : "";
   };
 
   const saveBtn = el("button.btn.btn--primary", { type: "button", text: "Save key" });
   const testBtn = el("button.btn", { type: "button", text: "Test connection" });
   const clearBtn = el("button.btn.btn--danger", { type: "button", text: "Clear stored key" });
 
-  const sync = (on, backend) => {
+  // `headline` is what makes a change *look* like a change: re-saving a key
+  // leaves the badge and the storage note reading exactly as before, so
+  // without it nothing on the card appears to move.
+  const sync = (on, backend, headline) => {
     state.configured = on;
     state.backend = backend;
     badge.className = `tag ${on ? "tag--ok" : "tag--warn"}`;
     badge.textContent = on ? "configured ✓" : "not configured";
-    note.textContent = backendText(on, backend);
+    note.textContent = headline || backendText(on, backend);
+    note.style.color = headline ? "var(--ok)" : "";
     clearBtn.disabled = !on;
   };
+
+  const keySaved = (backend) => `✓ Key saved — stored in ${where(backend)}, never shown again`;
 
   saveBtn.addEventListener("click", async () => {
     const key = keyInput.value.trim();
@@ -166,7 +178,8 @@ function geminiCard(ai, syncActive) {
     try {
       const res = await api.saveGeminiKey(key);
       keyInput.value = "";
-      sync(true, res?.backend || "file");
+      const backend = res?.backend || "file";
+      sync(true, backend, keySaved(backend));
       showOut("");
       toast("Key saved — it will never be shown again", "ok");
       await refreshAi();
@@ -188,7 +201,8 @@ function geminiCard(ai, syncActive) {
       if (keyInput.value.trim()) {
         const res = await api.saveGeminiKey(keyInput.value.trim());
         keyInput.value = "";
-        sync(true, res?.backend || "file");
+        const backend = res?.backend || "file";
+        sync(true, backend, keySaved(backend));
         toast("Key saved — testing it now", "ok");
         await refreshAi();
         syncActive?.();
@@ -198,7 +212,7 @@ function geminiCard(ai, syncActive) {
       const detail =
         `${r.provider || "unknown provider"} — ${r.message || ""}` +
         `${r.latency_ms ? ` (${r.latency_ms} ms)` : ""}`;
-      showOut(detail.trim(), r.ok ? "" : "bad");
+      showOut(detail.trim(), r.ok ? "ok" : "bad");
       if (r.ok) toast(r.message || "Connection OK", "ok");
       else toast(r.message || r.error || "Test failed — check the key and model", "bad");
     } catch (err) {
@@ -214,7 +228,7 @@ function geminiCard(ai, syncActive) {
     clearBtn.disabled = true;
     try {
       await api.clearGeminiKey();
-      sync(false, "none");
+      sync(false, "none", "Stored key removed — paste a new key above to turn Gemini on");
       showOut("");
       toast("Stored key removed", "ok");
       await refreshAi();

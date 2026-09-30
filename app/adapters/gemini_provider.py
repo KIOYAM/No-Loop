@@ -28,8 +28,22 @@ _ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:gen
 _TIMEOUT_S = 30.0
 _MAX_OUTPUT_CHARS = 8000
 
-GEMINI_MODELS = ("gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash")
+GEMINI_MODELS = ("gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash")
 DEFAULT_MODEL = GEMINI_MODELS[0]
+
+
+def _provider_error_message(response: Any) -> str:
+    """Google's own ``error.message``, flattened.
+
+    A bare status code throws away the useful half of the answer — the 404
+    body says *which* model was retired and *what* to use instead.
+    """
+    try:
+        data = response.json()
+        message = str((data.get("error") or {}).get("message") or "")
+    except (ValueError, AttributeError, TypeError):
+        return ""
+    return " ".join(message.split())[:300]
 
 
 class GeminiProvider:
@@ -144,9 +158,20 @@ class GeminiProvider:
             raise ProviderUnavailableError(
                 stage="ai.chat", reason="rate limited (429) — try again later", retryable=True
             )
-        if response.status_code >= 400:
+        if response.status_code == 404:
+            detail = _provider_error_message(response) or "model not found"
             raise ProviderUnavailableError(
-                stage="ai.chat", reason=f"provider HTTP {response.status_code}", retryable=False
+                stage="ai.chat",
+                reason=f"model '{self._model}' is no longer offered (404): {detail}",
+                user_action="Settings → Model: choose one of the current models.",
+            )
+        if response.status_code >= 400:
+            detail = _provider_error_message(response)
+            raise ProviderUnavailableError(
+                stage="ai.chat",
+                reason=f"provider HTTP {response.status_code}"
+                + (f": {detail}" if detail else ""),
+                retryable=False,
             )
         if len(response.content) > MAX_RESPONSE_BYTES:
             raise ProviderUnavailableError(stage="ai.chat", reason="response exceeds size cap")
