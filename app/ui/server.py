@@ -57,6 +57,12 @@ _MIME = {
 
 _MAX_JSON_BODY = 64 * 1024
 _MAX_UPLOAD_BODY = 20 * 1024 * 1024  # base64 of a 10 MB resume + envelope
+# GrapesJS project JSON (editor state for the resume canvas) is far larger than
+# the 64 KiB API budget, so the builder save routes get the same raised cap the
+# resume import already uses.
+_LARGE_BODY_PATHS = frozenset(
+    {"/api/resume/import", "/api/builder/variant", "/api/builder/template"}
+)
 _TASK_TIMEOUT_S = 180.0
 
 
@@ -1202,6 +1208,65 @@ class UILauncher:
     def handle_snapshot(self, body: dict[str, Any]) -> dict[str, Any]:
         return {"ok": True, "snapshot": self.snapshot()}
 
+    # -- resume builder (visual canvas; see RESUME_BUILDER_PLAN.md) ---------
+
+    def _builder(self) -> Any:
+        from app.services.builder_service import BuilderService
+
+        services = self._services()
+        return BuilderService(services["store"], services["settings"])
+
+    @staticmethod
+    def _builder_call(fn: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        from app.services.builder_service import BuilderError
+
+        try:
+            result: dict[str, Any] = fn(*args, **kwargs)
+            return result
+        except BuilderError as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def handle_builder_bootstrap(self, query: dict[str, list[str]]) -> dict[str, Any]:
+        return self._builder_call(
+            self._builder().bootstrap,
+            query.get("profile_id", [""])[0],
+            query.get("application_id", [None])[0] or None,
+            refresh=query.get("refresh", ["0"])[0] in ("1", "true", "yes"),
+        )
+
+    def handle_builder_list(self, query: dict[str, list[str]]) -> dict[str, Any]:
+        profile_id = query.get("profile_id", [""])[0]
+        if not profile_id:
+            return {"ok": False, "error": "profile_id is required"}
+        return self._builder_call(self._builder().list_variants, profile_id)
+
+    def handle_builder_save(self, body: dict[str, Any]) -> dict[str, Any]:
+        result = self._builder_call(self._builder().save_variant, body)
+        if result.get("ok"):
+            self._publish_state("builder_saved")
+        return result
+
+    def handle_builder_template(self, body: dict[str, Any]) -> dict[str, Any]:
+        return self._builder_call(self._builder().save_template, body)
+
+    def handle_builder_apply(self, body: dict[str, Any]) -> dict[str, Any]:
+        result = self._builder_call(self._builder().apply_suggestion, body)
+        if result.get("ok"):
+            self._publish_state("builder_applied")
+        return result
+
+    def handle_builder_export(self, body: dict[str, Any]) -> dict[str, Any]:
+        return self._builder_call(self._builder().export, body)
+
+    def handle_builder_suggest(self, body: dict[str, Any]) -> dict[str, Any]:
+        from app.services.builder_service import BuilderError
+
+        try:
+            result: dict[str, Any] = _run_async(self._builder().suggest_async(body))
+            return result
+        except BuilderError as exc:
+            return {"ok": False, "error": str(exc)}
+
 
 def _run_async(coro: Any) -> Any:
     """Run a coroutine from a worker thread (each HTTP request has its own)."""
@@ -1273,6 +1338,14 @@ def _register_routes() -> None:
             (re.compile(r"^/api/system/diagnose$"), lambda ln, m, b, q: ln.handle_diagnose()),
             (re.compile(r"^/api/reports/summary$"), lambda ln, m, b, q: _report_summary(ln, q)),
             (re.compile(r"^/api/reports/preview$"), lambda ln, m, b, q: _report_preview(ln, q)),
+            (
+                re.compile(r"^/api/builder/bootstrap$"),
+                lambda ln, m, b, q: ln.handle_builder_bootstrap(q),
+            ),
+            (
+                re.compile(r"^/api/builder/list$"),
+                lambda ln, m, b, q: ln.handle_builder_list(q),
+            ),
         ]
     )
     _JSON_POST.extend(
@@ -1314,6 +1387,17 @@ def _register_routes() -> None:
             (re.compile(r"^/api/match$"), lambda ln, m, b: ln.handle_match(b)),
             (re.compile(r"^/api/agent/run$"), lambda ln, m, b: ln.handle_agent_run(b)),
             (re.compile(r"^/api/applications$"), lambda ln, m, b: ln.handle_quick_add(b)),
+            (re.compile(r"^/api/builder/variant$"), lambda ln, m, b: ln.handle_builder_save(b)),
+            (
+                re.compile(r"^/api/builder/template$"),
+                lambda ln, m, b: ln.handle_builder_template(b),
+            ),
+            (
+                re.compile(r"^/api/builder/suggest$"),
+                lambda ln, m, b: ln.handle_builder_suggest(b),
+            ),
+            (re.compile(r"^/api/builder/apply$"), lambda ln, m, b: ln.handle_builder_apply(b)),
+            (re.compile(r"^/api/builder/export$"), lambda ln, m, b: ln.handle_builder_export(b)),
         ]
     )
 
@@ -1571,10 +1655,20 @@ def build_handler(launcher: UILauncher) -> type[BaseHTTPRequestHandler]:
 
         def do_POST(self) -> None:  # noqa: N802
             path, _ = self._parts()
-            max_bytes = _MAX_UPLOAD_BODY if path == "/api/resume/import" else _MAX_JSON_BODY
+            max_bytes = _MAX_UPLOAD_BODY if path in _LARGE_BODY_PATHS else _MAX_JSON_BODY
             body = self._body(max_bytes)
-            if not body and path == "/api/resume/import":
-                self._json(413, {"ok": False, "error": "upload too large or malformed"})
+            if not body and path in _LARGE_BODY_PATHS:
+                self._json(
+                    413,
+                    {
+                        "ok": False,
+                        "error": (
+                            "upload too large or malformed"
+                            if path == "/api/resume/import"
+                            else "payload too large or malformed"
+                        ),
+                    },
+                )
                 return
             for pattern, handler in _JSON_POST:
                 match = pattern.match(path)

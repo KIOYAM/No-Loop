@@ -1,0 +1,97 @@
+/* builder.css — the visual resume canvas route (GrapesJS). */
+
+.builder.page { max-width: none; }
+
+.builder__apps { max-width: 340px; }
+
+.builder__meta {
+  display: flex; align-items: center; gap: var(--s2);
+  flex-wrap: wrap; margin: var(--s3) 0 var(--s3);
+}
+.builder__save-state {
+  margin-left: auto; font-size: 12px; color: var(--muted);
+}
+
+.builder__grid {
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--s4); align-items: start;
+}
+.builder__main { min-width: 0; }
+
+.builder__canvas {
+  position: relative;
+  height: calc(100vh - 270px);
+  min-height: 520px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface);
+}
+/* the resume sits on paper; the area around it is the desk */
+.builder__canvas .gjs-cv-canvas,
+.builder__canvas .gjs-frame-wrapper { background: var(--inset); }
+.builder__canvas .gjs-editor { border: 0; }
+
+.builder__side {
+  display: flex; flex-direction: column; gap: var(--s3);
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  max-height: calc(100vh - 270px);
+  min-height: 320px;
+  overflow: auto;
+}
+.builder__tabs { display: flex; width: 100%; }
+.builder__panel[hidden] { display: none; }
+
+.builder__suggest-row { display: flex; gap: var(--s2); align-items: center; }
+.builder__suggest-row .input { flex: 1 1 auto; min-width: 0; }
+.builder__note { display: flex; flex-direction: column; gap: var(--s1); }
+.builder__note .row { align-items: center; }
+.builder__list { display: flex; flex-direction: column; gap: var(--s2); }
+
+.builder__sug {
+  display: flex; flex-direction: column; align-items: stretch;
+  gap: 6px; padding: 10px 12px;
+}
+.builder__sug-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.builder__sug-head code {
+  font-size: 11px; color: var(--muted); background: var(--inset);
+  padding: 1px 6px; border-radius: var(--r-sm);
+}
+.builder__swap {
+  border-left: 3px solid var(--line-2);
+  padding-left: 9px; display: flex; flex-direction: column; gap: 3px;
+}
+.builder__old { font-size: 12.5px; color: var(--faint); text-decoration: line-through; }
+.builder__new { font-size: 13.5px; color: var(--text); }
+.builder__ev { display: flex; flex-wrap: wrap; gap: 5px; }
+.builder__ev span {
+  font-size: 11px; color: var(--muted); background: var(--inset);
+  border: 1px solid var(--line); border-radius: var(--r-sm); padding: 2px 6px;
+}
+
+.builder__sections { display: flex; flex-direction: column; gap: 4px; }
+.builder__sec-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 6px; border: 1px solid var(--line);
+  border-radius: var(--r-sm); background: var(--surface-2);
+}
+.builder__sec-name {
+  flex: 1 1 auto; min-width: 0; text-align: left;
+  background: none; border: 0; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--text);
+  padding: 3px 0;
+}
+.builder__sec-name:hover { color: var(--accent); }
+.builder__selection { min-height: 34px; }
+.builder__selection .mono { word-break: break-all; }
+
+.builder__export-out { min-height: 18px; }
+
+@media (max-width: 1100px) {
+  .builder__grid { grid-template-columns: minmax(0, 1fr); }
+  .builder__canvas { height: 60vh; min-height: 420px; }
+  .builder__side { max-height: none; }
+}

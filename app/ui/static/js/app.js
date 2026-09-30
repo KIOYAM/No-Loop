@@ -34,6 +34,7 @@ const ROUTES = {
   applications: () => import("./routes/applications.js"),
   reports: () => import("./routes/reports.js"),
   settings: () => import("./routes/settings.js"),
+  builder: () => import("./routes/builder.js"),
 };
 
 const view = document.getElementById("view");

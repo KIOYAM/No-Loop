@@ -71,6 +71,21 @@ export const api = {
   /* ---- resume ---- */
   importResume: (body) => request("/api/resume/import", { method: "POST", body }),
 
+  /* ---- resume builder (visual canvas) ---- */
+  builderBootstrap: (profileId, applicationId = "", refresh = false) => {
+    const q = new URLSearchParams({ profile_id: profileId });
+    if (applicationId) q.set("application_id", applicationId);
+    if (refresh) q.set("refresh", "1");
+    return request(`/api/builder/bootstrap?${q}`);
+  },
+  builderList: (profileId) =>
+    request(`/api/builder/list?profile_id=${encodeURIComponent(profileId)}`),
+  builderSave: (body) => request("/api/builder/variant", { method: "POST", body }),
+  builderTemplate: (body) => request("/api/builder/template", { method: "POST", body }),
+  builderSuggest: (body) => request("/api/builder/suggest", { method: "POST", body }),
+  builderApply: (body) => request("/api/builder/apply", { method: "POST", body }),
+  builderExport: (body) => request("/api/builder/export", { method: "POST", body }),
+
   /* ---- jobs / matches / applications ---- */
   jobs: ({ limit = 60 } = {}) => request(`/api/jobs?limit=${limit}`),
   matches: (profileId = "") =>
