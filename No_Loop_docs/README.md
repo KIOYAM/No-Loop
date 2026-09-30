@@ -2,6 +2,38 @@
 
 No_Loop is a local-first, open-source, AI-assisted job discovery and application automation desktop application for Windows-first delivery, built for low-memory machines, and honest by construction: it automates only where permitted, assists everywhere else, and records everything.
 
+## Quick start — one command
+
+```bat
+start.bat
+```
+
+Double-click `start.bat` in Explorer, or run `.\start.ps1` from PowerShell. Nothing else to install
+or configure:
+
+- **First run only** — finds any Python 3.12+, creates `.\venv` inside the project and installs the
+  pinned packages from `requirements.lock.txt`. Everything stays in this folder: nothing is written
+  to `C:`, and no API key is needed to run.
+- It then binds `127.0.0.1` only (never the network), prints the animated startup banner, and opens
+  the browser at `http://127.0.0.1:8765`. `Ctrl+C` stops it.
+
+Every argument is passed straight through to the server:
+
+| Command | Effect |
+|---|---|
+| `start.bat` | local server + auto-open the browser |
+| `start.bat --port 9000` | listen on another port (default `8765`) |
+| `start.bat --no-browser` | don't open a tab (headless / remote shells) |
+| `start.bat --no-banner` | plain one-liner instead of the splash (pipes, logs, CI) |
+| `start.bat --no-color` | no ANSI colour |
+| `start.bat --data-dir D:\elsewhere` | store records elsewhere (default `.local-data`) |
+
+If no Python 3.12+ is found the launcher says so and stops — it never installs one for you.
+`python -m app.serve_ui --help` gives the same flags without the launcher.
+
+Records accumulate in `.\.local-data` (profiles, facts, jobs, the application ledger, settings).
+The UI receives updates over Server-Sent Events, so views change live without polling.
+
 ## Core principles (binding)
 
 1. No mandatory paid service, subscription, hosted backend, or API key.

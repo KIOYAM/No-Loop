@@ -1,18 +1,18 @@
 /* ui.js — DOM helpers: element factory, toast, modal, skeleton, count-up. */
 
 export const ICONS = {
-  check: '<svg viewBox="0 0 20 20"><path d="m4 10.5 4 4 8-9"/></svg>',
-  alert: '<svg viewBox="0 0 20 20"><path d="M10 2.5 18 17H2Z"/><path d="M10 8v4M10 14.5v.01"/></svg>',
-  info: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.5v.01"/></svg>',
-  x: '<svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5 5 15"/></svg>',
-  clock: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8"/><path d="M10 5.5V10l3 2"/></svg>',
-  play: '<svg viewBox="0 0 20 20"><path d="M6 4l10 6-10 6Z"/></svg>',
-  spark: '<svg viewBox="0 0 20 20"><path d="M10 2.5 11.8 8 17.5 10 11.8 12 10 17.5 8.2 12 2.5 10 8.2 8Z"/></svg>',
-  file: '<svg viewBox="0 0 20 20"><path d="M11 2H5.5A1.5 1.5 0 0 0 4 3.5v13A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V7Z"/><path d="M11 2v5h5"/></svg>',
-  down: '<svg viewBox="0 0 20 20"><path d="M10 3v10M6 9.5l4 4 4-4M4 17h12"/></svg>',
-  refresh: '<svg viewBox="0 0 20 20"><path d="M17 10a7 7 0 1 1-2.1-5"/><path d="M17 3v4h-4"/></svg>',
-  plus: '<svg viewBox="0 0 20 20"><path d="M10 4v12M4 10h12"/></svg>',
-  dot: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="4"/></svg>',
+  check: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10.5 4 4 8-9"/></svg>',
+  alert: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 18 17H2Z"/><path d="M10 8v4M10 14.5v.01"/></svg>',
+  info: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 9v5M10 6.5v.01"/></svg>',
+  x: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15"/></svg>',
+  clock: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8"/><path d="M10 5.5V10l3 2"/></svg>',
+  play: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 4l10 6-10 6Z"/></svg>',
+  spark: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2.5 11.8 8 17.5 10 11.8 12 10 17.5 8.2 12 2.5 10 8.2 8Z"/></svg>',
+  file: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2H5.5A1.5 1.5 0 0 0 4 3.5v13A1.5 1.5 0 0 0 5.5 18h9a1.5 1.5 0 0 0 1.5-1.5V7Z"/><path d="M11 2v5h5"/></svg>',
+  down: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10M6 9.5l4 4 4-4M4 17h12"/></svg>',
+  refresh: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M17 10a7 7 0 1 1-2.1-5"/><path d="M17 3v4h-4"/></svg>',
+  plus: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>',
+  dot: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="4"/></svg>',
 };
 
 const esc = (s) =>

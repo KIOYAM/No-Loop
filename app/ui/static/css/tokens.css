@@ -53,8 +53,8 @@
 
   --text:      #1d2226;
   --text-2:    #4c555e;
-  --muted:     #6b7480;
-  --faint:     #949aa3;
+  --muted:     #59606a;   /* 5.43:1 on the darkest light surface */
+  --faint:     #656b75;   /* 4.59:1 — hints and metadata are real text */
 
   --accent:      #0a66c2;
   --accent-hover:#084e96;
@@ -91,8 +91,8 @@
 
   --text:      #e8edf3;
   --text-2:    #b6c0cc;
-  --muted:     #8b97a5;
-  --faint:     #6a7684;
+  --muted:     #a1abb6;   /* 5.64:1 on the lightest dark surface */
+  --faint:     #8f9aa5;   /* 4.59:1 — hints and metadata are real text */
 
   --accent:      #5aa9ff;
   --accent-hover:#8cc4ff;

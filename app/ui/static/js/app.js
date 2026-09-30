@@ -325,24 +325,46 @@ function wireTopbar() {
 
   const nav = document.getElementById("sidenav");
   const app = document.getElementById("app");
-  document.getElementById("btn-nav").addEventListener("click", (e) => {
-    const btn = e.currentTarget;
-    const wide = window.matchMedia("(min-width: 961px)").matches;
-    if (wide) {
-      app.classList.toggle("nav-collapsed");
-      btn.setAttribute("aria-expanded", String(!app.classList.contains("nav-collapsed")));
-    } else {
-      nav.classList.toggle("is-open");
-      btn.setAttribute("aria-expanded", String(nav.classList.contains("is-open")));
-    }
+  const navBtn = document.getElementById("btn-nav");
+  const wideNav = window.matchMedia("(min-width: 961px)");
+
+  // The two layouts mean different things by "expanded" — a rail on wide
+  // screens, an off-canvas drawer on narrow ones. Re-read it from the DOM
+  // instead of assuming, so the label stays truthful after a route click and
+  // when the breakpoint moves underneath us.
+  const syncNavLabel = () => {
+    const open = wideNav.matches
+      ? !app.classList.contains("nav-collapsed")
+      : nav.classList.contains("is-open");
+    navBtn.setAttribute("aria-expanded", String(open));
+  };
+
+  navBtn.addEventListener("click", () => {
+    if (wideNav.matches) app.classList.toggle("nav-collapsed");
+    else nav.classList.toggle("is-open");
+    syncNavLabel();
   });
 
   // close the mobile drawer after picking a route
   nav.addEventListener("click", (e) => {
-    if (e.target.closest("a") && !window.matchMedia("(min-width: 961px)").matches) {
+    if (e.target.closest("a") && !wideNav.matches) {
       nav.classList.remove("is-open");
+      syncNavLabel();
     }
   });
+
+  // Escape is the expected way out of an overlay, and focus must land
+  // somewhere sensible once it is gone.
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && nav.classList.contains("is-open")) {
+      nav.classList.remove("is-open");
+      syncNavLabel();
+      navBtn.focus();
+    }
+  });
+
+  wideNav.addEventListener("change", syncNavLabel);
+  syncNavLabel();
 
   document.addEventListener("click", (e) => {
     const a = e.target.closest('a[href^="#/"]');

@@ -30,7 +30,7 @@ from app.ui.server import UILauncher, serve
 _FRAME_DELAY = 0.11
 
 #: Status lines printed underneath the splash (they must fit too).
-_FOOTER_LINES = 2
+_FOOTER_LINES = 1
 
 _ANSI = re.compile(r"\x1b\[[0-9;]*m")
 _VERSION_KEY = re.compile(r'^version\s*=\s*"([^"]+)"', re.MULTILINE)
@@ -67,6 +67,42 @@ def _fits(frame: str) -> bool:
     columns, rows = shutil.get_terminal_size()
     lines = frame.splitlines()
     return columns >= _visible_width(frame) and rows >= len(lines) + _FOOTER_LINES + 1
+
+
+def _console_honours_ansi() -> bool:
+    """True only when cursor-moves will actually move the cursor.
+
+    Windows needs ``ENABLE_VIRTUAL_TERMINAL_PROCESSING`` switched on before a
+    console will act on ``ESC[nA`` — and a redirected stream (file, pipe, CI
+    log) never understands it. In both cases we fall back to the static splash
+    rather than dumping escape-code garbage into the output.
+    """
+    if sys.platform != "win32":
+        return True  # POSIX terminals take ANSI for granted
+    import ctypes
+    import msvcrt
+
+    # Ask the handle Python actually writes to. GetStdHandle(STD_OUTPUT_HANDLE)
+    # comes back INVALID_HANDLE_VALUE in processes whose standard handles were
+    # never set up (shell-launched children, detached starters, CI wrappers)
+    # even though fd 1 is a perfectly healthy console — trusting it would
+    # silently switch the animation off on the terminals we want it on.
+    try:
+        handle = msvcrt.get_osfhandle(1)
+    except OSError:
+        return False  # no such descriptor: stdout is gone
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.GetConsoleMode.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+    kernel32.GetConsoleMode.restype = ctypes.c_int
+    kernel32.SetConsoleMode.argtypes = [ctypes.c_void_p, ctypes.c_uint32]
+    kernel32.SetConsoleMode.restype = ctypes.c_int
+
+    mode = ctypes.c_uint32()
+    if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+        return False  # not a console: redirected, piped or detached
+    # 0x0004 == ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    return bool(kernel32.SetConsoleMode(handle, mode.value | 0x0004))
 
 
 def _animate(stream: IO[str], frames: list[str], delay: float) -> None:
@@ -124,9 +160,8 @@ def main() -> None:
         "url": url,
         "data_dir": args.data_dir,
         "events": "SSE push - no polling",
-        "privacy": "local-only - nothing leaves this machine",
+        "privacy": "nothing leaves this machine",
         "stop": "Ctrl+C",
-        "tagline": "local-first job application center",
     }
 
     if args.no_banner:
@@ -134,7 +169,7 @@ def main() -> None:
         sys.stdout.flush()
     else:
         color = (not args.no_color) and banner.supports_color(sys.stdout)
-        _splash(sys.stdout, meta, color=color, animate=True)
+        _splash(sys.stdout, meta, color=color, animate=_console_honours_ansi())
 
     started = time.perf_counter()
     launcher = UILauncher(data_dir=args.data_dir, port=args.port)
