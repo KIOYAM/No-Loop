@@ -1,0 +1,23 @@
+JOHN A. SMITH
+Boston, MA | john.smith@example.com | (617) 555-0143
+github.com/jasmith | linkedin.com/in/johnsmith
+
+ABOUT ME
+Product-minded engineer with a decade of experience shipping web platforms.
+
+WHERE I'VE BEEN
+Lead Software Engineer, Datadog, Jan 2022 - Present
+Software Engineer II, HubSpot, Jul 2018 - Dec 2021
+Software Engineer, Kayak, Aug 2015 - Jun 2018
+
+WHAT I KNOW
+TypeScript, React, Node.js, PostgreSQL, AWS, Terraform, Grafana, Jest, Playwright
+
+SCHOOLING
+B.S. Computer Science, University of Michigan, 2015
+
+CREDENTIALS
+AWS Certified Developer - Associate
+
+SOME THINGS I'VE BUILT
+- Traceview: distributed tracing UI in TypeScript and React

@@ -1,0 +1,26 @@
+Priya Raghavan
+priya.raghavan2024@gmail.com | +91 90000 11111 | Chennai, India | github.com/priyar
+
+OBJECTIVE
+Recent computer science graduate seeking an entry-level software engineering role.
+
+EDUCATION
+B.Tech Computer Science, SASTRA University, 2020 - 2024
+- CGPA 8.9/10
+
+SKILLS
+Java, Python, SQL, MySQL, HTML, CSS, React, Git, Linux
+
+PROJECTS
+- Campus Connect: Django portal for placement drives, 1200 users
+- Vision Guard: CNN-based safety helmet detector using TensorFlow
+
+ACHIEVEMENTS
+- Winner, Smart India Hackathon 2023 internal round
+- NPTEL certification in Programming in Java
+
+CERTIFICATIONS
+Oracle Certified Associate, Java SE 8 Programmer
+
+LANGUAGES
+English, Tamil, Hindi

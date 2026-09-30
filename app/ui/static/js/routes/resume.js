@@ -343,7 +343,7 @@ export async function render() {
          (${r.ai_facts_created ?? 0} ${esc(t("resume.aiFacts"))}) ·
          ${esc(t("resume.duration"))} ${(wallMs / 1000).toFixed(2)}s
          ${r.warnings?.length ? `<br><span class="warn">${esc(r.warnings.join(" · "))}</span>` : ""}
-         ${r.ai_provider ? `<br><span class="faint">provider: ${esc(r.ai_provider)}</span>` : ""}</span>`
+         ${r.coverage?.expected ? `<br><span class="faint">coverage ${r.coverage.found}/${r.coverage.expected} field groups (${r.coverage.percent}%)${r.coverage.missing?.length ? ` · missing: ${esc(r.coverage.missing.join(", "))}` : ""}</span>` : ""}${r.parseability?.score != null ? `<br><span class="faint">ATS view: ${r.parseability.score}/100 (${esc(r.parseability.grade || "")})${r.parseability.flags?.length ? ` · ${esc(r.parseability.flags[0].fix || r.parseability.flags[0].message)}` : ""}</span>` : ""}${r.ai_provider ? `<br><span class="faint">provider: ${esc(r.ai_provider)}</span>` : ""}</span>`
       : `${ICONS.alert}<span><strong>${esc(t("resume.failed"))}</strong>
          ${esc(r.error_reason || "unknown error")}
          ${r.user_action ? `<br>${esc(r.user_action)}` : ""}</span>`;

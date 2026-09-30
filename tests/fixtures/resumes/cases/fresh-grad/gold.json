@@ -1,0 +1,36 @@
+{
+  "case": "fresh-grad",
+  "profile": "Final-year student, India. No work history at all: the only date range on the page is the degree span (2020 - 2024), which must NOT become employment.",
+  "expect": {
+    "full_name": ["Priya Raghavan"],
+    "location": ["Chennai, India"],
+    "contact_email": ["priya.raghavan2024@gmail.com"],
+    "contact_phone": ["+91 90000 11111"],
+    "link": ["github.com/priyar"],
+    "summary": [
+      "Recent computer science graduate seeking an entry-level software engineering role."
+    ],
+    "skill": [
+      "java", "python", "sql", "mysql", "html", "css", "react", "git", "linux",
+      "django", "tensorflow"
+    ],
+    "degree": ["B.Tech Computer Science"],
+    "education": ["SASTRA University"],
+    "education_year": [2024],
+    "certification": ["Oracle Certified Associate, Java SE 8 Programmer"],
+    "achievement": [
+      "Winner, Smart India Hackathon 2023 internal round",
+      "NPTEL certification in Programming in Java"
+    ],
+    "project": [
+      "Campus Connect: Django portal for placement drives, 1200 users",
+      "Vision Guard: CNN-based safety helmet detector using TensorFlow"
+    ],
+    "language": ["English, Tamil, Hindi"]
+  },
+  "absent": ["title", "employer", "date_range", "experience_years"],
+  "checks": {
+    "coverage_percent_min": 77,
+    "ats_score": 100
+  }
+}

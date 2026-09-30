@@ -113,6 +113,11 @@ class PipelineResult:
     user_action: str | None = None
     ai_provider: str | None = None
     duration_ms: int = 0
+    #: MASTER_SPEC §3 field-group coverage of the deterministic pass.
+    coverage: dict[str, Any] = field(default_factory=dict)
+    #: "what an ATS sees" score + flags (parseability report).
+    parseability: dict[str, Any] = field(default_factory=dict)
+    document_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -130,6 +135,9 @@ class PipelineResult:
             "user_action": self.user_action,
             "ai_provider": self.ai_provider,
             "duration_ms": self.duration_ms,
+            "coverage": self.coverage,
+            "parseability": self.parseability,
+            "document_id": self.document_id,
         }
 
 
@@ -148,6 +156,65 @@ def _trim(text: str) -> str:
     if len(text) <= _AI_INPUT_HEAD + _AI_INPUT_TAIL:
         return text
     return text[:_AI_INPUT_HEAD] + "\n...\n" + text[-_AI_INPUT_TAIL:]
+
+
+#: Sections the AI pass must see even when they sit in the trimmed middle.
+_AI_PRIORITY = (
+    "experience",
+    "skills",
+    "education",
+    "certifications",
+    "projects",
+    "achievements",
+    "summary",
+)
+
+
+def _select_window(text: str, sections: list[dict[str, Any]] | None = None) -> str:
+    """Build the model input, *including the middle of long resumes*.
+
+    The old head-9k/tail-3k trim silently hid whatever landed in the middle —
+    for long resumes that is usually the experience section, i.e. the fields
+    the AI pass exists to recover. Sections are pulled from the region that
+    neither the head nor the tail already covers, within the same budget.
+    """
+    budget = _AI_INPUT_HEAD + _AI_INPUT_TAIL
+    if len(text) <= budget or not sections:
+        return _trim(text)
+    head = text[:_AI_INPUT_HEAD]
+    tail = text[-_AI_INPUT_TAIL:]
+    head_end = len(head)
+    tail_start = len(text) - len(tail)
+    room = max(0, budget - len(head) - len(tail) - 32)
+    by_name = {str(s.get("name")): s for s in sections}
+    pieces: list[str] = []
+    used = 0
+    for name in _AI_PRIORITY:
+        section = by_name.get(name)
+        if not section:
+            continue
+        try:
+            start = max(int(section.get("body_start", 0)), head_end)
+            end = min(int(section.get("end", 0)), tail_start)
+        except (TypeError, ValueError):
+            continue
+        if end <= start:
+            continue
+        chunk = text[start:end].strip()
+        if not chunk:
+            continue
+        if used + len(chunk) + 2 > room:
+            chunk = chunk[: max(0, room - used - 2)]
+            if len(chunk) < 80:
+                break
+            pieces.append(chunk)
+            used += len(chunk)
+            break
+        pieces.append(chunk)
+        used += len(chunk) + 2
+    if not pieces:
+        return _trim(text)
+    return f"{head}\n...\n" + "\n\n".join(pieces) + "\n...\n" + tail
 
 
 class ResumePipeline:
@@ -358,7 +425,10 @@ class ResumePipeline:
             finish("ai", "skipped", "AI pass turned off for this import")
         else:
             ai_facts, ai_provider, ai_note, ai_status = self._ai_enhance(
-                profile_id=profile_id, text=text, filename=filename
+                profile_id=profile_id,
+                text=text,
+                filename=filename,
+                sections=list(outcome.structure.get("sections", []) or []),
             )
             for fact in ai_facts:
                 self.store.upsert("facts", fact.id, fact.model_dump(mode="json"))
@@ -398,17 +468,25 @@ class ResumePipeline:
             warnings=warnings,
             ai_provider=ai_provider,
             duration_ms=duration,
+            coverage=dict(outcome.coverage or {}),
+            parseability=dict(outcome.parseability or {}),
+            document_id=outcome.document_id,
         )
 
     # -- AI pass -----------------------------------------------------------
 
     def _ai_enhance(
-        self, *, profile_id: str, text: str, filename: str
+        self,
+        *,
+        profile_id: str,
+        text: str,
+        filename: str,
+        sections: list[dict[str, Any]] | None = None,
     ) -> tuple[list[ResumeFact], str | None, str, str]:
         """One bounded request. Returns (facts, provider, note, status)."""
         if len(text) < 120:
             return [], None, "text too short for an AI pass", "skipped"
-        prompt = _AI_PROMPT.format(chunk=_trim(text))
+        prompt = _AI_PROMPT.format(chunk=_select_window(text, sections))
         try:
             raw, provider = _run_async(
                 self.registry.complete_async(
@@ -427,15 +505,28 @@ class ResumePipeline:
         if parsed is None:
             return [], provider, "AI returned unparseable JSON — kept rule-based facts", "skipped"
 
-        facts = _facts_from_ai(profile_id, parsed, document_id=filename, provider=provider)
+        rule_values = _rule_value_index(self.store, profile_id, filename)
+        facts = _facts_from_ai(
+            profile_id,
+            parsed,
+            document_id=filename,
+            provider=provider,
+            source_text=text,
+            rule_values=rule_values,
+        )
         fields = sum(1 for f in facts if f.field_class != "skill")
         skills = sum(1 for f in facts if f.field_class == "skill")
         if not facts:
-            return [], provider, "AI found nothing new beyond the rule pass", "skipped"
+            return (
+                [],
+                provider,
+                "AI found nothing new (or nothing it could ground in the text)",
+                "skipped",
+            )
         return (
             facts,
             provider,
-            f"+{fields} profile facts, +{skills} skills from {provider}",
+            f"+{fields} profile facts, +{skills} skills from {provider} (grounded)",
             "done",
         )
 
@@ -541,18 +632,83 @@ def _load_json(raw: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def _normalize(value: str) -> str:
+    return " ".join(str(value).lower().split())
+
+
+def _grounded(value: str, source_text: str, kind: str = "value") -> bool:
+    """Anti-fabrication: the claim must literally occur in the source text.
+
+    Values may be *matched*, never paraphrased — an LLM that rewords a bullet
+    into something the resume does not say is exactly the failure mode the
+    no-fabrication rule exists to prevent (skill 03).
+    """
+    from rapidfuzz import fuzz
+
+    needle = _normalize(value)
+    haystack = _normalize(source_text)
+    if not needle:
+        return False
+    if needle in haystack:
+        return True
+    if kind == "summary":
+        # a summary is allowed to rephrase, but must keep its content words
+        tokens = [t for t in needle.split() if len(t) > 3]
+        if not tokens:
+            return False
+        kept = sum(1 for t in tokens if t in haystack)
+        return kept / len(tokens) >= 0.7
+    if len(needle) < 6:
+        return False
+    return fuzz.partial_ratio(needle, haystack) >= 92
+
+
+def _rule_value_index(store: Any, profile_id: str, document_id: str) -> set[str]:
+    """Normalized values the deterministic pass already found (agreement signal)."""
+    values: set[str] = set()
+    for record in store.all("facts").values():
+        if record.get("profile_id") != profile_id:
+            continue
+        provenance = record.get("provenance") or {}
+        if provenance.get("document_id") != document_id:
+            continue
+        value = record.get("value")
+        if value is not None and not isinstance(value, (dict, list)):
+            values.add(_normalize(str(value)))
+        skill = record.get("skill") or {}
+        name = skill.get("normalized_name") or skill.get("name")
+        if name:
+            values.add(_normalize(str(name)))
+    return values
+
+
 def _facts_from_ai(
     profile_id: str,
     payload: dict[str, Any],
     *,
     document_id: str,
     provider: str,
+    source_text: str | None = None,
+    rule_values: set[str] | None = None,
 ) -> list[ResumeFact]:
-    """Map the AI's JSON onto inferred facts (confidence < 1.0 by construction)."""
-    from app.adapters.facts_from_resume import KNOWN_SKILLS  # shared vocabulary
+    """Map the AI's JSON onto inferred facts (confidence < 1.0 by construction).
+
+    When ``source_text`` is given every value is **grounded** against it and
+    ungrounded values are dropped; confidence then encodes agreement —
+    0.9 when the rule pass found the same value, 0.7 when only the model did.
+    Without ``source_text`` the legacy taxonomy-only behaviour is kept (the
+    deterministic contract used by tests and by paste-only imports).
+    """
+    from app.adapters import skill_taxonomy
 
     facts: list[ResumeFact] = []
     rule = f"llm:{provider}"
+    agreed = rule_values or set()
+
+    def confidence_for(value: str) -> float:
+        if source_text is None:
+            return 0.8
+        return 0.9 if _normalize(value) in agreed else 0.7
 
     for key, field_class in _FIELD_CLASS.items():
         raw = payload.get(key)
@@ -564,31 +720,40 @@ def _facts_from_ai(
                 continue
             if field_class == "summary" and len(value) < 40:
                 continue
+            if source_text is not None and not _grounded(
+                value, source_text, "summary" if field_class == "summary" else "value"
+            ):
+                continue  # never store a claim the resume does not contain
             facts.append(
                 ResumeFact(
                     profile_id=profile_id,
                     field_class=field_class,
                     value=value[:600],
-                    confidence=0.8,
+                    confidence=confidence_for(value),
                     provenance=FactProvenance(document_id=document_id, extraction_rule=rule),
                 )
             )
 
     skills = payload.get("skills")
     if isinstance(skills, list):
-        known = {s.lower() for s in KNOWN_SKILLS}
+        known = {s.lower() for s in skill_taxonomy.known_surface_names()}
         for item in skills:
             name = str(item).strip()[:120]
             if not name:
                 continue
-            if name.lower() not in known:
-                continue  # taxonomy discipline: only known-surface skills become facts
+            is_known = name.lower() in known
+            if source_text is None:
+                if not is_known:
+                    continue  # taxonomy discipline without a source to check against
+            elif not _grounded(name, source_text):
+                continue  # open vocabulary, but only when the text has it
+            canonical = skill_taxonomy.canonical(name)
             facts.append(
                 ResumeFact(
                     profile_id=profile_id,
                     field_class="skill",
-                    skill=SkillClaim(name=name),
-                    confidence=0.8,
+                    skill=SkillClaim(name=name, normalized_name=canonical),
+                    confidence=confidence_for(canonical if is_known else name),
                     provenance=FactProvenance(document_id=document_id, extraction_rule=rule),
                 )
             )

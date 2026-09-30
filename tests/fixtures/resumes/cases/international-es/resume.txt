@@ -1,0 +1,21 @@
+MARIA GARCIA
+Madrid, Spain | maria.garcia@example.es | +34 612 34 56 78
+linkedin.com/in/mariagarcia
+
+RESUMEN / SUMMARY
+Data engineer with 7 years building healthcare analytics platforms (ES/EN).
+
+EXPERIENCIA LABORAL
+Data Engineer, Telefónica, 03/2021 - Present
+Data Engineer, Banco Santander, 09/2017 - 02/2021
+Analista de Datos, Indra, 2015 - 08/2017
+
+HABILIDADES TECNICAS
+SQL, Python, Airflow, dbt, Snowflake, Power BI, AWS, Docker
+
+FORMACIÓN
+M.Sc. Data Science, Universidad Politécnica de Madrid, 2015
+B.Sc. Computer Science, Universidad Complutense de Madrid, 2013
+
+CERTIFICACIONES
+AWS Certified Data Analytics - Specialty

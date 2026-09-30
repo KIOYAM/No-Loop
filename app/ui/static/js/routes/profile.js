@@ -166,7 +166,13 @@ function factsPanel(facts, { onChanged }) {
       const [kind, label] = FACT_STATE_LABEL[f.state] || ["", f.state];
       const row = el("div.suggestion");
       const txt = el("div", { style: { flex: "1 1 auto", minWidth: "0" } });
-      const value = f.skill?.name ?? (f.value == null ? "" : String(f.value));
+      const raw = f.skill?.name ?? f.value;
+      const value =
+        raw == null
+          ? ""
+          : typeof raw === "object"
+            ? String(raw.raw ?? JSON.stringify(raw))
+            : String(raw);
       txt.append(
         el("div", {}, [
           el("span.suggestion__val", { text: value }),

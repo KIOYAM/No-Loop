@@ -211,14 +211,14 @@ async function openPackageViewer(app) {
       }),
     );
   }
-  modal({
+  const dlg = modal({
     title: "Assisted package",
     subtitle: "Everything prepared for you — review, copy, submit yourself.",
     body,
     width: 620,
     actions: [el("button.btn.btn--primary", { text: t("shell.close") || "Close", onclick: () => dlg.close() })],
   });
-  const dlg = document.querySelector("dialog.modal:last-of-type");
+  return dlg;
 }
 
 /* ------------------------------------------------------------- agent run - */

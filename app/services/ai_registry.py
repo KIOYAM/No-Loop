@@ -194,7 +194,14 @@ class AIRegistry:
         """Round-trip smoke test of the *resolved* provider (honest errors)."""
         provider = self.resolve()
         name = getattr(provider, "name", "unknown")
-        if not hasattr(provider, "chat_async"):
+        # Local models expose chat_async, Gemini exposes complete_async. Only
+        # testing for the former made a *configured* Gemini key report "No
+        # provider configured; using deterministic fallback" while never
+        # contacting Google — so a green tick meant nothing at all.
+        method = getattr(provider, "chat_async", None) or getattr(
+            provider, "complete_async", None
+        )
+        if method is None:
             return {
                 "ok": provider.available(),
                 "provider": name,
@@ -207,7 +214,7 @@ class AIRegistry:
             }
         started = time.perf_counter()
         try:
-            text = await provider.chat_async(
+            text = await method(
                 "Reply with exactly: OK",
                 system="You are a connectivity check.",
                 max_tokens=8,

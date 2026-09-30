@@ -1110,6 +1110,8 @@ class UILauncher:
         if not profile_id or not company or not title:
             return {"ok": False, "error": "profile_id, company and title are required"}
         services = self._services()
+        if not services["store"].get("profiles", profile_id):
+            return {"ok": False, "error": "profile not found"}
         application = Application(
             profile_id=profile_id,
             entry_method=EntryMethod.MANUAL,

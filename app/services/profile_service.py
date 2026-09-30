@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from app.adapters.extractors import get_extractor
@@ -46,6 +47,13 @@ class ImportResult:
     warnings: list[str] = field(default_factory=list)
     error_reason: str | None = None
     user_action: str | None = None
+    #: MASTER_SPEC §3 field-group coverage (found/expected/percent/missing).
+    coverage: dict[str, Any] = field(default_factory=dict)
+    #: "what an ATS would see" score + actionable flags.
+    parseability: dict[str, Any] = field(default_factory=dict)
+    #: detected section structure (names + spans; never raw text).
+    structure: dict[str, Any] = field(default_factory=dict)
+    document_id: str | None = None
     text: str | None = field(default=None, repr=False, compare=False)
 
     def to_dict(self) -> dict[str, Any]:
@@ -113,6 +121,7 @@ class ResumeService:
 
         # text acquisition: TXT decodes directly; PDF/DOCX go through extractors
         stage("extract", "running", "extracting raw text")
+        page_offsets: list[int] | None = None
         if filename.lower().endswith((".txt", ".md")):
             try:
                 text, encoding = decode_bytes(data)
@@ -135,6 +144,7 @@ class ResumeService:
                 stage("extract", "failed", result.error_reason or "extraction failed")
                 return self._fail(result.error_reason or "extraction failed", result.user_action)
             text, encoding = result.text, "extractor"
+            page_offsets = getattr(result, "page_offsets", None)
 
         if not text.strip():
             stage("extract", "failed", "scanned/image document")
@@ -148,18 +158,31 @@ class ResumeService:
         from app.adapters.facts_from_resume import parse_resume_text
 
         stage("parse", "running", "rule-based fact extraction")
-        outcome = parse_resume_text(profile_id, text, document_id=filename)
+        outcome = parse_resume_text(
+            profile_id, text, document_id=filename, page_offsets=page_offsets
+        )
         warnings = list(outcome.ambiguities)
+        coverage = outcome.coverage
+        raw_missing = coverage.get("missing", []) if coverage else []
+        missing = list(raw_missing) if isinstance(raw_missing, list) else []
+        if missing:
+            warnings.append(
+                f"coverage {coverage.get('percent', 0)}% — still missing: "
+                + ", ".join(str(item) for item in missing[:5])
+            )
         stage(
             "parse",
             "done",
             f"{len(outcome.facts)} inferred facts · sections: "
-            f"{', '.join(outcome.detected_sections) or 'none detected'}",
+            f"{', '.join(outcome.detected_sections) or 'none detected'}"
+            f" · coverage {coverage.get('percent', 0)}%"
+            f" · ATS {outcome.parseability.get('score', 0)}/100",
         )
 
         # version history (full memory of the user's documents)
         stage("persist", "running", "writing version history + fact ledger")
         version = self._next_version(profile_id)
+        now = datetime.now(UTC).isoformat()
         self.store.upsert(
             "resume_versions",
             f"{profile_id}:{version}",
@@ -171,7 +194,31 @@ class ResumeService:
                 "normalized_hash": normalized_hash(text),
                 "encoding": encoding,
                 "chars": len(text),
-                "imported_at": version and None,  # timestamp added by storage layer consumer
+                "imported_at": now,
+            },
+        )
+        # ResumeDocument: structure + spans + reports, NEVER the raw text
+        # (skill 03 / DATA_SOURCES: never store full documents).
+        self.store.upsert(
+            "resume_documents",
+            f"{profile_id}:{version}",
+            {
+                "id": f"{profile_id}:v{version}",
+                "profile_id": profile_id,
+                "version": version,
+                "filename": filename,
+                "content_hash": content_key,
+                "chars": len(text),
+                "pages": len(page_offsets) if page_offsets else None,
+                "sections": outcome.structure.get("sections", []),
+                "detected_sections": outcome.detected_sections,
+                "unrecognized_headings": outcome.structure.get("unrecognized_headings", []),
+                "employment_records": outcome.structure.get("employment_records", 0),
+                "education_records": outcome.structure.get("education_records", 0),
+                "tenure_years": outcome.tenure,
+                "coverage": coverage,
+                "parseability": outcome.parseability,
+                "created_at": now,
             },
         )
         for fact in outcome.facts:
@@ -190,6 +237,14 @@ class ResumeService:
             facts_created=len(outcome.facts),
             encoding=encoding,
             warnings=warnings,
+            coverage=coverage,
+            parseability=outcome.parseability,
+            structure={
+                "detected": outcome.detected_sections,
+                "unrecognized": outcome.structure.get("unrecognized_headings", []),
+                "tenure_years": outcome.tenure,
+            },
+            document_id=f"{profile_id}:v{version}",
             text=text,
         )
 
@@ -226,9 +281,18 @@ class ResumeService:
             updates["contact_email"] = email
         if phone and not profile.contact_phone:
             updates["contact_phone"] = phone
+        links_map = dict(profile.links)
         for link in links:
-            if "github.com" in link and "github" not in profile.links:
-                updates.setdefault("links", {**profile.links, "github": link})
+            lowered = link.lower()
+            for host, key in (
+                ("github.com", "github"),
+                ("linkedin.com", "linkedin"),
+                ("gitlab.com", "gitlab"),
+            ):
+                if host in lowered and key not in links_map:
+                    links_map[key] = link
+        if links_map != profile.links:
+            updates["links"] = links_map
         if updates:
             updated = profile.model_copy(update=updates)
             self.store.upsert("profiles", profile.id, updated.model_dump(mode="json"))

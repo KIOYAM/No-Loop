@@ -1,0 +1,27 @@
+{
+  "case": "no-headings",
+  "profile": "A resume with no section headings at all: header, two prose paragraphs and one 'Core tools:' line. Every field has to come from a whole-document fallback, and the degree line must not become a job.",
+  "expect": {
+    "full_name": ["Daniel Okafor"],
+    "location": ["Manchester, UK"],
+    "contact_email": ["daniel.okafor@example.co.uk"],
+    "contact_phone": ["+44 7700 900123"],
+    "link": ["github.com/dokafor"],
+    "summary": [
+      "Daniel is a platform engineer with 8 years of experience in fintech payments and reliability."
+    ],
+    "skill": [
+      "docker", "kubernetes", "terraform", "aws", "python", "go", "postgresql",
+      "prometheus"
+    ],
+    "degree": ["B.Sc. Computer Science"],
+    "education": ["University of Manchester"],
+    "education_year": [2015],
+    "experience_years": [8]
+  },
+  "absent": ["title", "employer", "date_range"],
+  "checks": {
+    "ats_score_min": 80,
+    "unrecognized_headings": []
+  }
+}

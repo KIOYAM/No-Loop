@@ -1,0 +1,39 @@
+{
+  "case": "standard-india",
+  "profile": "Senior backend engineer, India. Standard headings, one typo heading (WORK EXPERENCE), Indian phone/date formats, US-style month dates.",
+  "expect": {
+    "full_name": ["ARUN KUMAR"],
+    "location": ["Bengaluru, India"],
+    "contact_email": ["arun.kumar@gmail.com"],
+    "contact_phone": ["+91 98765 43210"],
+    "link": ["linkedin.com/in/arunkumar"],
+    "summary": [
+      "Backend engineer with 6 years building fintech APIs, payment rails and data pipelines."
+    ],
+    "skill": [
+      "c++", "c#", "python", "fastapi", "django", "postgresql", "redis", "kafka",
+      "aws", "kubernetes", "terraform", "graphql", "jenkins", "react", "git",
+      "linux", "ci/cd", "go", "rabbitmq", "rest api", "celery"
+    ],
+    "title": ["Senior Software Engineer", "Software Engineer"],
+    "employer": ["Razorpay", "Zoho"],
+    "date_range": ["Mar 2021 - Present", "Jun 2018 - Feb 2021"],
+    "degree": ["B.E. Computer Science"],
+    "education": ["Anna University"],
+    "education_year": [2018],
+    "certification": ["AWS Certified Solutions Architect - Associate"],
+    "achievement": [
+      "Zoho Chairman's Award for Engineering Excellence",
+      "Speaker at PyCon India 2023 on async Python backends"
+    ],
+    "project": [
+      "UPI Settlement Engine: ledger reconciler in Go and PostgreSQL",
+      "resume-lens: parser that scores ATS readability"
+    ],
+    "experience_years": [6]
+  },
+  "checks": {
+    "coverage_percent": 100,
+    "ats_score": 100
+  }
+}

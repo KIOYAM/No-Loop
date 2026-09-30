@@ -62,63 +62,32 @@ def _skill_tokens(text: str) -> set[str]:
 
 
 def _skills_from_job(job: Job) -> set[str]:
-    """Extract a crude skill-candidate set from the JD text (deterministic).
+    """Extract the skill set mentioned in the JD text (deterministic).
 
-    The taxonomy normalizer (ESCO/O*NET) will replace this heuristic later;
-    the MatchEngine only depends on the *interface*, so swapping it is local.
+    Skills come from the shared taxonomy (open vocabulary + canonical names),
+    so the JD side and the profile side normalise identically — the swap point
+    flagged in IMPROVEMENT_AUDIT ("skill-taxonomy normalizer").
     """
-    known = {
-        "python",
-        "java",
-        "javascript",
-        "typescript",
-        "sql",
-        "html",
-        "css",
-        "fastapi",
-        "django",
-        "flask",
-        "react",
-        "nodejs",
-        "docker",
-        "kubernetes",
-        "aws",
-        "azure",
-        "gcp",
-        "postgresql",
-        "mysql",
-        "mongodb",
-        "redis",
-        "machine learning",
-        "deep learning",
-        "nlp",
-        "pandas",
-        "numpy",
-        "pytorch",
-        "tensorflow",
-        "git",
-        "linux",
-        "rest",
-        "api",
-        "ci/cd",
-    }
-    tokens = _skill_tokens(job.description_text)
-    found: set[str] = set()
-    for skill in known:
-        if " " in skill:
-            if skill in job.description_text.lower():
-                found.add(skill)
-        elif skill in tokens:
-            found.add(skill)
-    return found
+    from app.adapters import skill_taxonomy
+
+    hits = skill_taxonomy.extract_skills(job.description_text, allow_ambiguous=True)
+    # nothing catalogued ⇒ the factor is reported N/A rather than guessed at
+    return {hit.canonical for hit in hits}
 
 
 def _skills_from_profile(skills: list[str]) -> set[str]:
+    """Canonicalise profile skills so both sides of the match use one name."""
+    from app.adapters import skill_taxonomy
+
     out: set[str] = set()
     for s in skills:
         n = _norm(s)
+        if not n:
+            continue
+        out.add(skill_taxonomy.canonical(n))
+        out.add(n)  # raw surface: out-of-taxonomy skills still match verbatim
         for syn in _SKILL_SYNONYMS.get(n, (n,)):
-            out.add(syn)
+            out.add(skill_taxonomy.canonical(syn))
     return out
 
 

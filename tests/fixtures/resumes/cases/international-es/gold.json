@@ -1,0 +1,32 @@
+{
+  "case": "international-es",
+  "profile": "Spain-based data engineer. ES headings (EXPERIENCIA LABORAL / FORMACIÓN / HABILIDADES TECNICAS), MM/YYYY dates, an international phone number, and a role line in Spanish.",
+  "expect": {
+    "full_name": ["MARIA GARCIA"],
+    "location": ["Madrid, Spain"],
+    "contact_email": ["maria.garcia@example.es"],
+    "contact_phone": ["+34 612 34 56 78"],
+    "link": ["linkedin.com/in/mariagarcia"],
+    "summary": [
+      "Data engineer with 7 years building healthcare analytics platforms (ES/EN)."
+    ],
+    "skill": [
+      "sql", "python", "airflow", "dbt", "snowflake", "power bi", "aws", "docker"
+    ],
+    "title": ["Data Engineer", "Analista de Datos"],
+    "employer": ["Telefónica", "Banco Santander", "Indra"],
+    "date_range": ["03/2021 - Present", "09/2017 - 02/2021", "2015 - 08/2017"],
+    "degree": ["M.Sc. Data Science", "B.Sc. Computer Science"],
+    "education": [
+      "Universidad Politécnica de Madrid",
+      "Universidad Complutense de Madrid"
+    ],
+    "education_year": [2015, 2013],
+    "certification": ["AWS Certified Data Analytics - Specialty"],
+    "experience_years": [7]
+  },
+  "checks": {
+    "coverage_percent_min": 85,
+    "ats_score_min": 90
+  }
+}

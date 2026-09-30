@@ -1,0 +1,33 @@
+ARUN KUMAR
+arun.kumar@gmail.com | +91 98765 43210 | Bengaluru, India | linkedin.com/in/arunkumar
+
+PROFESSIONAL SUMMARY
+Backend engineer with 6 years building fintech APIs, payment rails and data pipelines.
+
+WORK EXPERENCE
+Senior Software Engineer, Razorpay, Mar 2021 - Present
+- Built payment APIs in C++, Python and Go serving 40k req/s
+- Led a 4-engineer team migrating jobs from RabbitMQ to Kafka
+- Cut p99 latency by 38% with Redis caching and PostgreSQL tuning
+
+Software Engineer - Zoho, Jun 2018 - Feb 2021
+- Django REST services, Celery workers and React admin console
+- mentored 3 interns
+
+TECHNICAL SKILLS
+C++, C#, Python, FastAPI, Django, PostgreSQL, Redis, Kafka, AWS, Kubernetes,
+Terraform, GraphQL, Jenkins, React, Git, Linux, CI/CD
+
+EDUCATION
+B.E. Computer Science, Anna University, 2018
+
+CERTIFICATIONS & AWARDS
+AWS Certified Solutions Architect - Associate
+Zoho Chairman's Award for Engineering Excellence
+
+PROJECTS
+- UPI Settlement Engine: ledger reconciler in Go and PostgreSQL
+- resume-lens: parser that scores ATS readability
+
+ACHIEVEMENTS
+- Speaker at PyCon India 2023 on async Python backends

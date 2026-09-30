@@ -74,9 +74,14 @@ class DocumentExtractor(Protocol):
 
 
 class ExtractionResult:
-    """Outcome of extraction: text or an honest, actionable failure."""
+    """Outcome of extraction: text or an honest, actionable failure.
 
-    __slots__ = ("text", "ok", "error_reason", "user_action")
+    ``page_offsets`` (optional) records the character offset where each page
+    begins so facts can carry ``provenance.page`` — extraction ≠ inference, so
+    this is layout metadata, never interpretation.
+    """
+
+    __slots__ = ("text", "ok", "error_reason", "user_action", "page_offsets")
 
     def __init__(
         self,
@@ -85,11 +90,13 @@ class ExtractionResult:
         *,
         error_reason: str | None = None,
         user_action: str | None = None,
+        page_offsets: list[int] | None = None,
     ) -> None:
         self.ok = ok
         self.text = text
         self.error_reason = error_reason
         self.user_action = user_action
+        self.page_offsets = page_offsets
 
 
 @runtime_checkable

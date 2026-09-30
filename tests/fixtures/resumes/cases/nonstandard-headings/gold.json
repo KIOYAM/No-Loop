@@ -1,0 +1,46 @@
+{
+  "case": "nonstandard-headings",
+  "profile": "US engineer whose resume uses invented headings: ABOUT ME (recognisable), WHERE I'VE BEEN, WHAT I KNOW, SCHOOLING, CREDENTIALS, SOME THINGS I'VE BUILT. Fields must still be found through the whole-document fallbacks.",
+  "expect": {
+    "full_name": ["JOHN A. SMITH"],
+    "location": ["Boston, MA"],
+    "contact_email": ["john.smith@example.com"],
+    "contact_phone": ["(617) 555-0143"],
+    "link": ["github.com/jasmith", "linkedin.com/in/johnsmith"],
+    "summary": [
+      "Product-minded engineer with a decade of experience shipping web platforms."
+    ],
+    "skill": [
+      "typescript", "react", "node.js", "postgresql", "aws", "terraform",
+      "grafana", "jest", "playwright", "datadog"
+    ],
+    "title": [
+      "Lead Software Engineer",
+      "Software Engineer II",
+      "Software Engineer"
+    ],
+    "employer": ["Datadog", "HubSpot", "Kayak"],
+    "date_range": [
+      "Jan 2022 - Present",
+      "Jul 2018 - Dec 2021",
+      "Aug 2015 - Jun 2018"
+    ],
+    "degree": ["B.S. Computer Science"],
+    "education": ["University of Michigan"],
+    "education_year": [2015],
+    "certification": ["AWS Certified Developer - Associate"],
+    "project": ["Traceview: distributed tracing UI in TypeScript and React"],
+    "experience_years": [11]
+  },
+  "checks": {
+    "coverage_percent_min": 85,
+    "ats_score_min": 85,
+    "unrecognized_headings": [
+      "WHERE I'VE BEEN",
+      "WHAT I KNOW",
+      "SCHOOLING",
+      "CREDENTIALS",
+      "SOME THINGS I'VE BUILT"
+    ]
+  }
+}

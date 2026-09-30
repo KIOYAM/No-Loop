@@ -1,0 +1,8 @@
+Daniel Okafor
+daniel.okafor@example.co.uk | +44 7700 900123 | Manchester, UK | github.com/dokafor
+
+Daniel is a platform engineer with 8 years of experience in fintech payments and reliability.
+He has worked at Revolut, Monzo and Wise, mostly on Kubernetes platforms.
+B.Sc. Computer Science, University of Manchester, 2015.
+
+Core tools: Docker, Kubernetes, Terraform, AWS, Python, Go, PostgreSQL, Prometheus
